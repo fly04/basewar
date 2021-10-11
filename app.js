@@ -1,3 +1,5 @@
+const config = require('./config');
+
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -16,7 +18,7 @@ app.use('/hello', function hello(req, res, next) {
 
 //connection to DB
 const mongoose = require('mongoose');
-mongoose.connect(process.env.DATABASE_URL || 'mongodb://localhost/basewar', function (err) {
+mongoose.connect(config.dbUrl, function (err) {
   if (err) {
     console.warn('Could not connect to database because: ' + err.message);
   } else {
