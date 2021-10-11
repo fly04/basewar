@@ -14,6 +14,16 @@ app.use('/hello', function hello(req, res, next) {
   res.send('world');
 });
 
+//connection to DB
+const mongoose = require('mongoose');
+mongoose.connect(process.env.DATABASE_URL || 'mongodb://localhost/basewar', function (err) {
+  if (err) {
+    console.warn('Could not connect to database because: ' + err.message);
+  } else {
+    console.log('Connected to MongoDB');
+  }
+});
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
