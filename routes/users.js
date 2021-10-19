@@ -40,18 +40,13 @@ router.post("/", utils.requireJson, function (req, res, next) {
 /* GET users listing. */
 router.get('/', authenticate, function (req, res, next) {
 
-  User.find().count(function (err, total) {
+  const countQuery = queryUsers(req);
+  countQuery.count(function (err, total) {
     if (err) {
       return next(err);
     }
 
-    let query = User.find();
-
-    // ===Filters===
-    // Filter users by name
-    if (req.query.name != null) {
-      query = query.where('name').equals(req.query.name);
-    }
+    let query = queryUsers(req);
 
     // ===Pagination===
     // Parse pagination parameters from URL query parameters
@@ -106,5 +101,20 @@ router.post('/login', function (req, res, next) {
     });
   })
 });
+
+/**
+ * Returns a Mongoose query that will retrieve users filtered with the URL query parameters.
+ */
+function queryUsers(req) {
+
+  let query = User.find();
+
+  // Filter users by name
+  if (req.query.name != null) {
+    query = query.where('name').equals(req.query.name);
+  }
+
+  return query;
+}
 
 module.exports = router;
