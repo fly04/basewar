@@ -1,5 +1,5 @@
 // To get access to environment variables stored in .env
-require('dotenv').config();
+require("dotenv").config();
 
 // Environment variables (add validation?)
 exports.port = process.env.PORT || '3000';

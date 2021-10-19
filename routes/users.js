@@ -1,6 +1,6 @@
-const bcrypt = require('bcrypt');
-const express = require('express');
-const jwt = require('jsonwebtoken');
+const bcrypt = require("bcrypt");
+const express = require("express");
+const jwt = require("jsonwebtoken");
 const router = express.Router();
 const User = require('../models/user');
 const utils = require('./utils');
@@ -8,28 +8,32 @@ const { authenticate } = require('./auth');
 const config = require('../config');
 
 /* POST new user */
-router.post('/', function (req, res, next) {
 
-  const plainPassword = req.body.password;
+router.post("/", function (req, res, next) {
+	const plainPassword = req.body.password;
 
-  bcrypt.hash(plainPassword, config.bcryptCostFactor, function (err, passwordHash) {
-    if (err) {
-      return next(err);
-    }
+	bcrypt.hash(
+		plainPassword,
+		config.bcryptCostFactor,
+		function (err, passwordHash) {
+			if (err) {
+				return next(err);
+			}
 
-    // Create a new document from the JSON in the request body
-    const newUser = new User(req.body);
-    newUser.password = passwordHash;
+			// Create a new document from the JSON in the request body
+			const newUser = new User(req.body);
+			newUser.password = passwordHash;
 
-    // Save that document
-    newUser.save(function (err, savedUser) {
-      if (err) {
-        return next(err);
-      }
-      // Send the saved document in the response
-      res.send(savedUser);
-    });
-  });
+			// Save that document
+			newUser.save(function (err, savedUser) {
+				if (err) {
+					return next(err);
+				}
+				// Send the saved document in the response
+				res.send(savedUser);
+			});
+		}
+	);
 });
 
 /* GET users listing. */
