@@ -10,7 +10,7 @@ const baseSchema = new Schema({
     },
     ownerId: {
         type: Schema.Types.ObjectId,
-        ref: 'Person',
+        ref: 'User',
         default: null,
         required: true,
         validate: {
