@@ -38,20 +38,17 @@ router.post("/", utils.requireJson, function (req, res, next) {
 	);
 });
 
-/* GET users listing. */
-router.get("/", function (req, res, next) {
-	User.find().count(function (err, total) {
+/* GET users
+ ********************************/
+router.get('/', function (req, res, next) {
+
+	const countQuery = queryUsers(req);
+	countQuery.count(function (err, total) {
 		if (err) {
 			return next(err);
 		}
 
-		let query = User.find();
-
-		// ===Filters===
-		// Filter users by name
-		if (req.query.name != null) {
-			query = query.where("name").equals(req.query.name);
-		}
+		let query = queryUsers(req);
 
 		// ===Pagination===
 		// Parse pagination parameters from URL query parameters
@@ -61,7 +58,7 @@ router.get("/", function (req, res, next) {
 		query = query.skip((page - 1) * pageSize).limit(pageSize);
 
 		// Add the Link header to the response
-		utils.addLinkHeader("/api/users", page, pageSize, total, res);
+		utils.addLinkHeader('/api/users', page, pageSize, total, res);
 
 		// ===Query execution===
 		query.exec(function (err, users) {
@@ -85,7 +82,6 @@ router.get("/:id", function (req, res, next) {
 		res.send(user);
 	});
 });
-
 
 /* Login route
  ********************************/
@@ -121,5 +117,21 @@ router.post("/login", function (req, res, next) {
 		});
 	});
 });
+
+/**
+ * Returns a Mongoose query that will retrieve users filtered with the URL query parameters.
+ */
+function queryUsers(req) {
+
+	let query = User.find();
+
+	// Filter users by name
+	if (req.query.name != null) {
+		query = query.where('name').equals(req.query.name);
+	}
+
+	return query;
+}
+
 
 module.exports = router;
