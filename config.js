@@ -2,8 +2,12 @@
 require('dotenv').config();
 
 // Environment variables (add validation?)
-exports.dbUrl = process.env.DATABASE_URL || 3000;
+exports.port = process.env.PORT || '3000';
+exports.dbUrl = process.env.DATABASE_URL || 'mongodb://localhost/basewar';
+exports.baseUrl = process.env.BASE_URL || `http://localhost:${exports.port}`;
 
 // JWT signing key
 exports.secretKey = process.env.SECRET_KEY || 'changeme';
 exports.bcryptCostFactor = 10;
+
+exports.URL_PREFIX = '/api'
