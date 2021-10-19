@@ -9,7 +9,8 @@ const utils = require("./utils");
 // const { authenticate } = require("./auth");
 const config = require("../config");
 
-/* POST new user */
+/* POST new user
+ ********************************/
 router.post("/", utils.requireJson, function (req, res, next) {
 	const plainPassword = req.body.password;
 
@@ -73,7 +74,8 @@ router.get("/", function (req, res, next) {
 	});
 });
 
-// GET user by id
+/* GET user by id
+ ********************************/
 router.get("/:id", function (req, res, next) {
 	User.findById(req.params.id).exec(function (err, user) {
 		if (err) {
@@ -84,7 +86,9 @@ router.get("/:id", function (req, res, next) {
 	});
 });
 
-// Login route
+
+/* Login route
+ ********************************/
 router.post("/login", function (req, res, next) {
 	const secretKey = config.secretKey;
 
