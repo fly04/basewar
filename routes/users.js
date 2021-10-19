@@ -83,6 +83,19 @@ router.get("/:id", function (req, res, next) {
 	});
 });
 
+/* DELETE user by id
+ ********************************/
+router.delete("/:id", function (req, res, next) {
+	User.findById(req.params.id).exec(function (err, user) {
+		if (err) {
+			return next(err);
+		}
+
+		user.remove();
+		res.send(`${user.name} deleted`);
+	});
+});
+
 /* Login route
  ********************************/
 router.post("/login", function (req, res, next) {
