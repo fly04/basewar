@@ -39,7 +39,7 @@ const baseSchema = new Schema({
 baseSchema.set('toJSON', {
     transform: transformJsonBase, // Modify the serialized JSON with a custom function
     virtuals: true // Include virtual properties when serializing documents to JSON
-  });
+});
 
 /**
  * Given a user ID, ensures that it references an existing user.
@@ -67,10 +67,10 @@ function validateUser(value) {
  */
 function validateBaseNameUniqueness(value) {
     const MovieModel = mongoose.model('Base', baseSchema);
-    return MovieModel.findOne().where('name').equals(value).exec().then( (existingBase) => {
-      return !existingBase || existingBase._id.equals(this._id)
+    return MovieModel.findOne().where('name').equals(value).exec().then((existingBase) => {
+        return !existingBase || existingBase._id.equals(this._id)
     });
-  }
+}
 
 /**
  * Removes extra MongoDB properties from serialized bases,
@@ -78,7 +78,9 @@ function validateBaseNameUniqueness(value) {
  */
 function transformJsonBase(doc, json, options) {
 
-    // Remove MongoDB _id, __v & createdAt (there's a default virtual "id" property)
+    json.owner = doc.ownerId.toJSON();
+    delete json.ownerId;
+
     delete json._id;
     delete json.__v;
     delete json.createdAt;

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+const { baseUrl } = require('../config');
 
 // Define the schema for users
 const userSchema = new Schema({
@@ -13,10 +14,22 @@ const userSchema = new Schema({
 // Hiding the password hash from API responses
 userSchema.set("toJSON", {
 	transform: transformJsonUser,
+	virtuals: true // Include virtual properties when serializing documents to JSON
+});
+
+// Create a virtual property `link` which lead to this user data
+userSchema.virtual('link').get(function () {
+	return `${baseUrl}/users/${this.id}`;
+});
+
+// Create a virtual property `link` which lead to this user data
+userSchema.virtual('bases').get(function () {
+	return `${baseUrl}/bases?ownerId=${this.id}`;
 });
 
 function transformJsonUser(doc, json, options) {
-	// Remove the hashed password and version from response.
+	// Remove the id, hashed password and version from response.
+	delete json._id;
 	delete json.password;
 	delete json.__v;
 	return json;

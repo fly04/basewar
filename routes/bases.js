@@ -57,6 +57,9 @@ router.get('/', function (req, res, next) {
         // Add the Link header to the response
         utils.addLinkHeader('/api/bases', page, pageSize, total, res);
 
+        // Replace ownerId by the user document
+        query = query.populate('ownerId');
+
         // ===Query execution===
         query.exec(function (err, bases) {
             if (err) {
