@@ -1,2 +1,9 @@
+# NodeJS
 node_modules
+
+# Environment
 .env
+
+# Automated test
+/.nyc_output
+/coverage
