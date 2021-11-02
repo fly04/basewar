@@ -1,33 +1,37 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-const { baseUrl } = require('../config');
+const { baseUrl } = require("../config");
 
 // Define the schema for users
 const userSchema = new Schema({
 	name: {
 		type: String,
 		unique: true,
+		required: true,
 	},
-	password: String,
-    money: {
-        type: Number,
-        default: 0,
-    }
+	password: {
+		type: String,
+		required: true,
+	},
+	money: {
+		type: Number,
+		default: 0,
+	},
 });
 
 // Hiding the password hash from API responses
 userSchema.set("toJSON", {
 	transform: transformJsonUser,
-	virtuals: true // Include virtual properties when serializing documents to JSON
+	virtuals: true, // Include virtual properties when serializing documents to JSON
 });
 
 // Create a virtual property `link` which lead to this user data
-userSchema.virtual('link').get(function () {
+userSchema.virtual("link").get(function () {
 	return `${baseUrl}/users/${this.id}`;
 });
 
-// Create a virtual property `link` which lead to this user data
-userSchema.virtual('bases').get(function () {
+// Create a virtual property `bases` which lead to this user data
+userSchema.virtual("bases").get(function () {
 	return `${baseUrl}/bases?ownerId=${this.id}`;
 });
 

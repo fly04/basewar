@@ -4,25 +4,12 @@ const ObjectId = mongoose.Types.ObjectId;
 const { baseUrl } = require("../config");
 
 // Define the schema for bases
-const baseSchema = new Schema({
-	name: {
-		type: String,
-		unique: true,
-		minlength: 3,
-		maxlength: 50,
-		required: true,
-		validate: {
-			// Manually validate uniqueness to send a "pretty" validation error
-			// rather than a MongoDB duplicate key error
-			validator: validateBaseNameUniqueness,
-			message: "Base {VALUE} already exists",
-		},
+const investmentSchema = new Schema({
+	baseId: {
+		type: Schema.Types.ObjectId,
+		ref: "Base",
 	},
-	createdAt: {
-		type: Date,
-		default: Date.now,
-	},
-	ownerId: {
+	investorId: {
 		type: Schema.Types.ObjectId,
 		ref: "User",
 		default: null,
@@ -34,16 +21,26 @@ const baseSchema = new Schema({
 			message: (props) => props.reason.message,
 		},
 	},
+	createdAt: {
+		type: Date,
+		default: Date.now,
+	},
 });
 
 // Customize the behavior of base.toJSON() (called when using res.send)
-baseSchema.set("toJSON", {
-	transform: transformJsonBase, // Modify the serialized JSON with a custom function
+investmentSchema.set("toJSON", {
+	transform: transformJsonInvestment, // Modify the serialized JSON with a custom function
 	virtuals: true, // Include virtual properties when serializing documents to JSON
 });
 
-baseSchema.virtual("investments").get(function () {
-	return `${baseUrl}/bases/${this.id}/investments/`;
+// Create a virtual property `link` which lead to this investment data
+investmentSchema.virtual("link").get(function () {
+	return `${baseUrl}/bases/${this.baseId}/investments/${this.id}`;
+});
+
+// Create a virtual property `base` which lead to this investment data
+investmentSchema.virtual("base").get(function () {
+	return `${baseUrl}/bases/${this.baseId}`;
 });
 
 /**
@@ -71,31 +68,18 @@ function validateUser(value) {
 }
 
 /**
- * Given a name, calls the callback function with true if no base exists with that name
- * (or the only base that exists is the same as the base being validated).
- */
-function validateBaseNameUniqueness(value) {
-	const MovieModel = mongoose.model("Base", baseSchema);
-	return MovieModel.findOne()
-		.where("name")
-		.equals(value)
-		.exec()
-		.then((existingBase) => {
-			return !existingBase || existingBase._id.equals(this._id);
-		});
-}
-
-/**
  * Removes extra MongoDB properties from serialized bases,
  * and includes the owner's data if it has been populated.
  */
-function transformJsonBase(doc, json, options) {
-	json.owner = doc.ownerId.toJSON();
-	delete json.ownerId;
+function transformJsonInvestment(doc, json, options) {
+	json.investor = doc.investorId.toJSON();
+	delete json.investorId;
 	delete json._id;
 	delete json.__v;
-	delete json.createdAt;
+	delete json.baseId;
+
+	return json;
 }
 
 // Create the model from the schema and export it
-module.exports = mongoose.model("Base", baseSchema);
+module.exports = mongoose.model("Investment", investmentSchema);

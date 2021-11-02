@@ -1,5 +1,7 @@
-const { baseUrl } = require('../config');
-const formatLinkHeader = require('format-link-header');
+const { baseUrl } = require("../config");
+const formatLinkHeader = require("format-link-header");
+const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
 
 /**
  * Parses the pagination parameters (i.e. page & page size) from the request.
@@ -8,20 +10,19 @@ const formatLinkHeader = require('format-link-header');
  * @returns An object with "page" and "pageSize" properties
  */
 exports.getPaginationParameters = function (req) {
+	// Parse the "page" URL query parameter indicating the index of the first element that should be in the response
+	let page = parseInt(req.query.page, 10);
+	if (isNaN(page) || page < 1) {
+		page = 1;
+	}
 
-    // Parse the "page" URL query parameter indicating the index of the first element that should be in the response
-    let page = parseInt(req.query.page, 10);
-    if (isNaN(page) || page < 1) {
-        page = 1;
-    }
+	// Parse the "pageSize" URL query parameter indicating how many elements should be in the response
+	let pageSize = parseInt(req.query.pageSize, 10);
+	if (isNaN(pageSize) || pageSize < 0 || pageSize > 100) {
+		pageSize = 100;
+	}
 
-    // Parse the "pageSize" URL query parameter indicating how many elements should be in the response
-    let pageSize = parseInt(req.query.pageSize, 10);
-    if (isNaN(pageSize) || pageSize < 0 || pageSize > 100) {
-        pageSize = 100;
-    }
-
-    return { page, pageSize };
+	return { page, pageSize };
 };
 
 /**
@@ -34,40 +35,98 @@ exports.getPaginationParameters = function (req) {
  * @param {ExpressResponse} res - The Exprss response object
  */
 exports.addLinkHeader = function (resourceHref, page, pageSize, total, res) {
+	const links = {};
+	const url = baseUrl + resourceHref;
+	const maxPage = Math.ceil(total / pageSize);
 
-    const links = {};
-    const url = baseUrl + resourceHref;
-    const maxPage = Math.ceil(total / pageSize);
+	// Add first & prev links if current page is not the first one
+	if (page > 1) {
+		links.first = { rel: "first", url: `${url}?page=1&pageSize=${pageSize}` };
+		links.prev = {
+			rel: "prev",
+			url: `${url}?page=${page - 1}&pageSize=${pageSize}`,
+		};
+	}
 
-    // Add first & prev links if current page is not the first one
-    if (page > 1) {
-        links.first = { rel: 'first', url: `${url}?page=1&pageSize=${pageSize}` };
-        links.prev = { rel: 'prev', url: `${url}?page=${page - 1}&pageSize=${pageSize}` };
-    }
+	// Add next & last links if current page is not the last one
+	if (page < maxPage) {
+		links.next = {
+			rel: "next",
+			url: `${url}?page=${page + 1}&pageSize=${pageSize}`,
+		};
+		links.last = {
+			rel: "last",
+			url: `${url}?page=${maxPage}&pageSize=${pageSize}`,
+		};
+	}
 
-    // Add next & last links if current page is not the last one
-    if (page < maxPage) {
-        links.next = { rel: 'next', url: `${url}?page=${page + 1}&pageSize=${pageSize}` };
-        links.last = { rel: 'last', url: `${url}?page=${maxPage}&pageSize=${pageSize}` };
-    }
-
-    // If there are any links (i.e. if there is more than one page),
-    // add the Link header to the response
-    if (Object.keys(links).length > 1) {
-        console.log(links);
-        res.set('Link', formatLinkHeader(links));
-    }
-}
+	// If there are any links (i.e. if there is more than one page),
+	// add the Link header to the response
+	if (Object.keys(links).length > 1) {
+		console.log(links);
+		res.set("Link", formatLinkHeader(links));
+	}
+};
 
 /**
  * Responds with 415 Unsupported Media Type if the request does not have the Content-Type application/json.
  */
 exports.requireJson = function (req, res, next) {
-    if (req.is('application/json')) {
-        return next();
-    }
+	if (req.is("application/json")) {
+		return next();
+	}
 
-    const error = new Error('This resource only has an application/json representation');
-    error.status = 415; // 415 Unsupported Media Type
-    next(error);
+	const error = new Error(
+		"This resource only has an application/json representation"
+	);
+	error.status = 415; // 415 Unsupported Media Type
+	next(error);
+};
+
+/**
+ * Given a user ID, ensures that it references an existing user.
+ *
+ * If it's not the case or the ID is missing or not a valid object ID,
+ * the "userId" property is invalidated.
+ */
+exports.validateBase = function (value) {
+	if (!ObjectId.isValid(value)) {
+		throw new Error("Base not found");
+	}
+
+	return mongoose
+		.model("Base")
+		.findOne({ _id: ObjectId(value) })
+		.exec()
+		.then((base) => {
+			if (!base) {
+				throw new Error("Base not found");
+			}
+
+			return true;
+		});
+};
+
+/**
+ * Given a user ID, ensures that it references an existing user.
+ *
+ * If it's not the case or the ID is missing or not a valid object ID,
+ * the "userId" property is invalidated.
+ */
+exports.validateUser = function (value) {
+	if (!ObjectId.isValid(value)) {
+		throw new Error("User not found");
+	}
+
+	return mongoose
+		.model("User")
+		.findOne({ _id: ObjectId(value) })
+		.exec()
+		.then((base) => {
+			if (!base) {
+				throw new Error("User not found");
+			}
+
+			return true;
+		});
 };
