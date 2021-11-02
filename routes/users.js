@@ -9,40 +9,113 @@ const utils = require("./utils");
 // const { authenticate } = require("./auth");
 const config = require("../config");
 
-/* POST new user
+/********************************
+ * Middlewares
  ********************************/
-router.post("/", utils.requireJson, function (req, res, next) {
-	const plainPassword = req.body.password;
 
+/**
+ * Find user by id
+ */
+const findUser = (req, res, next) => {
+	User.findById(req.params.id).exec((err, user) => {
+		if (err) {
+			return next(new Error(err));
+		}
+		req.user = user;
+		next();
+	});
+};
+
+/**
+ * Save user in database
+ */
+const saveUser = (req, res, next) => {
+	req.user.save(err => {
+		if (err) {
+			return next(new Error(err));
+		}
+		next();
+	});
+};
+
+/**
+ * Add user
+ */
+const addUser = (req, res, next) => {
+	req.user = new User(req.body);
+	next();
+};
+
+/**
+ * Remove user
+ */
+const removeUser = (req, res, next) => {
+	req.user.remove(err => {
+		if (err) return next(new Error(err));
+		next();
+	});
+};
+
+/**
+ * Update user
+ */
+const updateUser = (req, res, next) => {
+	User.findByIdAndUpdate(req.params.id, req.body, { new: true }, err => {
+		if (err) return next(new Error(err));
+		req.user = req.body;
+		next();
+	});
+};
+
+/**
+ * Hash user password
+ */
+const hashPassword = (req, res, next) => {
+	const plainPassword = req.body.password;
 	bcrypt.hash(
 		plainPassword,
 		config.bcryptCostFactor,
-		function (err, passwordHash) {
+		function (err, hashedPassword) {
 			if (err) {
 				return next(err);
 			}
-
-			// Create a new document from the JSON in the request body
-			const newUser = new User(req.body);
-			newUser.password = passwordHash;
-
-			// Save that document
-			newUser.save(function (err, savedUser) {
-				if (err) {
-					return next(err);
-				}
-				// Send the saved document in the response
-				res
-					.status(201)
-					.set("Location", `${config.baseUrl}/users/${savedUser._id}`)
-					.send(savedUser);
-			});
+			// const newUser = new User(req.body);
+			req.user.password = hashedPassword;
+			next();
 		}
 	);
+};
+
+/**
+ * Returns a Mongoose query that will retrieve users filtered with the URL query parameters.
+ */
+function queryUsers(req) {
+	let query = User.find();
+
+	// Filter users by name
+	if (req.query.name != null) {
+		query = query.where("name").equals(req.query.name);
+	}
+
+	return query;
+}
+
+module.exports = router;
+
+/********************************
+ * HTTP methods
+ ********************************/
+
+/**
+ * GET user
+ */
+router.get("/:id", findUser, (req, res) => {
+	res.send(req.user);
 });
 
-/* GET users
- ********************************/
+/**
+ * GET users
+ */
 router.get("/", function (req, res, next) {
 	const countQuery = queryUsers(req);
 	countQuery.count(function (err, total) {
@@ -73,30 +146,45 @@ router.get("/", function (req, res, next) {
 	});
 });
 
-/* GET user by id
- ********************************/
-router.get("/:id", function (req, res, next) {
-	User.findById(req.params.id).exec(function (err, user) {
-		if (err) {
-			return next(err);
-		}
+/**
+ * POST new user
+ */
+router.post(
+	"/",
+	utils.requireJson,
+	addUser,
+	hashPassword,
+	saveUser,
+	(req, res) => {
+		res
+			.status(201)
+			.set("Location", `${config.baseUrl}/users/${req.user._id}`)
+			.send(req.user);
+	}
+);
 
-		res.send(user);
-	});
+/**
+ * DELETE new user
+ */
+router.delete("/:id", findUser, removeUser, (req, res) => {
+	res.status(204).send(`User ${req.user.name} deleted`);
 });
 
-/* DELETE user by id
- ********************************/
-router.delete("/:id", function (req, res, next) {
-	User.findById(req.params.id).exec(function (err, user) {
-		if (err) {
-			return next(err);
-		}
-
-		user.remove();
-		res.send(`${user.name} deleted`);
-	});
-});
+/**
+ * PUT user
+ */
+router.put(
+	"/:id",
+	utils.requireJson,
+	updateUser,
+	hashPassword,
+	(req, res, next) => {
+		res
+			.status(201)
+			.set("Location", `${config.baseUrl}/users/${req.user._id}`)
+			.send(req.user);
+	}
+);
 
 /* Login route
  ********************************/
@@ -132,19 +220,5 @@ router.post("/login", function (req, res, next) {
 		});
 	});
 });
-
-/**
- * Returns a Mongoose query that will retrieve users filtered with the URL query parameters.
- */
-function queryUsers(req) {
-	let query = User.find();
-
-	// Filter users by name
-	if (req.query.name != null) {
-		query = query.where("name").equals(req.query.name);
-	}
-
-	return query;
-}
 
 module.exports = router;
