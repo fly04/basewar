@@ -71,6 +71,33 @@ router.get('/', function (req, res, next) {
     });
 });
 
+/* GET base by id
+ ********************************/
+router.get("/:id", function (req, res, next) {
+	let query = Base.findById(req.params.id);
+
+    query.populate('ownerId');
+    query.exec(function (err, base) {
+		if (err) {
+			return next(err);
+		}
+		res.send(base);
+	});
+});
+
+/* DELETE base by id
+ ********************************/
+router.delete("/:id", function (req, res, next) {
+	Base.findById(req.params.id).exec(function (err, base) {
+		if (err) {
+			return next(err);
+		}
+
+		base.remove();
+		res.send(`${base.name} deleted`);
+	});
+});
+
 /**
  * Returns a Mongoose query that will retrieve bases filtered with the URL query parameters.
  */

@@ -9,6 +9,10 @@ const userSchema = new Schema({
 		unique: true,
 	},
 	password: String,
+    money: {
+        type: Number,
+        default: 0,
+    }
 });
 
 // Hiding the password hash from API responses
