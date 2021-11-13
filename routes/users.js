@@ -79,8 +79,8 @@ const hashPassword = (req, res, next) => {
 			if (err) {
 				return next(err);
 			}
-			// const newUser = new User(req.body);
-			req.user.password = hashedPassword;
+
+			req.body.password = hashedPassword;
 			next();
 		}
 	);
@@ -99,9 +99,6 @@ function queryUsers(req) {
 
 	return query;
 }
-
-module.exports = router;
-
 /********************************
  * HTTP methods
  ********************************/
@@ -152,8 +149,8 @@ router.get("/", function (req, res, next) {
 router.post(
 	"/",
 	utils.requireJson,
-	addUser,
 	hashPassword,
+	addUser,
 	saveUser,
 	(req, res) => {
 		res
@@ -176,8 +173,8 @@ router.delete("/:id", findUser, removeUser, (req, res) => {
 router.put(
 	"/:id",
 	utils.requireJson,
-	updateUser,
 	hashPassword,
+	updateUser,
 	(req, res, next) => {
 		res
 			.status(201)
