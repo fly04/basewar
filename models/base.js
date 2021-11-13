@@ -104,7 +104,7 @@ function validateBaseNameUniqueness(value) {
 // Create a geospatial index on the location property.
 baseSchema.index({ location: "2dsphere" });
 
-// Validate a GeoJSON coordinates array (longitude, latitude and optional altitude).
+// Validate a GeoJSON coordinates array (longitude, latitude and optional altitude). -- dupliqué dans model/user
 function validateGeoJsonCoordinates(value) {
 	return (
 		Array.isArray(value) &&

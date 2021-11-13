@@ -2,6 +2,7 @@
     "watch": [
       "app.js",
       "bin/www",
-      "routes/**/*.js"
+      "routes/**/*.js",
+      "ws.js"
     ]
   }
