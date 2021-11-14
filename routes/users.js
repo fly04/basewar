@@ -100,7 +100,7 @@ function queryUsers(req) {
 	return query;
 }
 /********************************
- * HTTP methods
+ * HTTP Methods
  ********************************/
 
 /**

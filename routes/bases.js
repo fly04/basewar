@@ -6,9 +6,33 @@ const User = require("../models/user");
 const Investment = require("../models/investment");
 const ObjectId = mongoose.Types.ObjectId;
 const utils = require("./utils");
+const users = require("./users");
 
 const router = express.Router();
 
+/********************************
+ * Middlewares
+ ********************************/
+/**
+ * Count the total number of investments in the database.
+ * @param {String} baseId
+ * @returns {Integer} The number of investments in the database.
+ */
+const countInvestments = baseId => {
+	return Investment.countDocuments({ baseId: baseId });
+};
+
+/**
+ * Remove all investments from a base.
+ * @param {Number} baseId
+ */
+const removeBaseInvestments = baseId => {
+	Investment.deleteMany({ baseId: baseId });
+};
+
+/********************************
+ * HTTP Methods
+ ********************************/
 /* POST new base */
 router.post("/", utils.requireJson, function (req, res, next) {
 	if (req.body.userId && !ObjectId.isValid(req.body.userId)) {
@@ -93,12 +117,15 @@ router.delete("/:id", function (req, res, next) {
 			return next(err);
 		}
 
+		removeBaseInvestments(base.id);
 		base.remove();
+
 		res.send(`${base.name} deleted`);
 	});
 });
 
-/* POST new investment */
+/* POST new investement
+ ********************************/
 router.post("/:id/investments", utils.requireJson, function (req, res, next) {
 	const newInvestment = new Investment(req.body);
 
@@ -107,6 +134,31 @@ router.post("/:id/investments", utils.requireJson, function (req, res, next) {
 
 	//Checks if investor exists
 	utils.validateUser(newInvestment.investorId);
+
+	// Check if the investor is not the owner of the base
+
+	/*
+	const basesOfInvestor = Base.find({ ownerId: newInvestment.investorId });
+	console.log(basesOfInvestor);
+	if (baseOwnerId == newInvestment.investorId) {
+		let error = new Error("The owner of the base can't invest in it");
+		error.statuts = 400;
+		return next(error);
+	}
+	*/
+
+	// Check if there is not too much investments already
+
+	/*
+	console.log(countInvestments(req.body.baseId));
+	if (countInvestments(req.body.baseId) >= 5) {
+		let error = new Error(
+			"This base has already too much investments (max. 5)"
+		);
+		error.statuts = 400;
+		return next(error);
+	}
+	*/
 
 	let investorQuery = User.findOne({ _id: newInvestment.investorId }).exec(
 		function (err, investor) {
@@ -121,11 +173,12 @@ router.post("/:id/investments", utils.requireJson, function (req, res, next) {
 				if (err) {
 					return next(err);
 				}
+				console.log(investment);
 
 				// Check if user already invested in base - FONCTIONNE PAS
 				if (investment !== null) {
 					let error = new Error("This user already invested in this base.");
-					error.statuts = 400;
+					error.status = 400;
 					return next(error);
 					// return res.status(400).send("This user already invested in this base.");
 				}
@@ -133,7 +186,7 @@ router.post("/:id/investments", utils.requireJson, function (req, res, next) {
 				//Checks if investor has enough money
 				if (investor.money < 0) {
 					let error = new Error("Not enough money.");
-					error.statuts = 400;
+					error.status = 400;
 					return next(error);
 					//return res.status(400).send("Not enough money.");
 				}
