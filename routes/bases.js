@@ -122,9 +122,9 @@ router.post("/:id/investments", utils.requireJson, function (req, res, next) {
 					return next(err);
 				}
 
-				if (investment !== null) {
-					throw new Error("This user already invested in this base.");
-				}
+				// if (investment !== null) {
+				// 	throw new Error("This user already invested in this base.");
+				// }
 
 				console.log(investment);
 
