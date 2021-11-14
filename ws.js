@@ -40,21 +40,6 @@ exports.createWebSocketServer = function (httpServer) {
 				case "updateLocation":
 					handleUpdateLocation(parsedMessage.location, parsedMessage.userId);
 					break;
-				case "createBase":
-					//TO CODE
-					break;
-				case "createInvestment":
-					//TO CODE
-					break;
-				case "clients": //debug
-					console.log(clients);
-					break;
-				case "users": //debug
-					console.log(users);
-					break;
-				case "bases": //debug
-					console.log(activeBases);
-					break;
 			}
 		});
 
@@ -68,16 +53,7 @@ exports.createWebSocketServer = function (httpServer) {
 	});
 };
 
-// PAS UTILISÉ POUR LE MOMENT?
-// // Broadcast a message to all connected clients.
-// exports.broadcastMessage = function (message) {
-// 	debug(
-// 		`Broadcasting message to all connected clients: ${JSON.stringify(message)}`
-// 	);
-// 	// You can easily iterate over the "clients" array to send a message to all
-// 	// connected clients.
-// };
-
+// Update user location if user exists else add him to users array
 function handleUpdateLocation(location, userId) {
 	let userExistsAlready = false;
 
@@ -96,6 +72,7 @@ function handleUpdateLocation(location, userId) {
 	}
 }
 
+//Add a new user to the users array
 function setActiveUser(location, userId) {
 	User.findById(userId).exec((err, user) => {
 		if (err) {
@@ -109,6 +86,7 @@ function setActiveUser(location, userId) {
 	});
 }
 
+//Verify if any base is active and update its active users and income else removes it from activeBases array
 function updateAllActiveBases() {
 	Base.find({}).exec((err, bases) => {
 		if (err) {
@@ -132,7 +110,6 @@ function updateAllActiveBases() {
 					activeUsers.push(user);
 				}
 			});
-			// console.log("activeUsers: " + activeUsers);
 
 			//If yes, add the users to bases activeUsers and add the base in the activeBases array
 			if (activeUsers.length > 0) {
@@ -167,10 +144,9 @@ function updateAllActiveBases() {
 			}
 		});
 	});
-
-	// console.log("activeBases: " + activeBases);
 }
 
+// Update every active users money
 function updateUsersMoney() {
 	activeBases.forEach((base) => {
 		let activeUsersCount = base.activeUsers.length;
@@ -184,25 +160,28 @@ function updateUsersMoney() {
 					(activeUsersCount - 1);
 		}
 
-		// console.log(income);
-
 		base.activeUsers.forEach((user) => {
 			user.money += income;
+			sendMessageToUser(user.id, {
+				command: "updateUser",
+				params: { money: user.money, income: income },
+			});
 		});
 	});
 }
 
+// Update users money in DB
 function updateUserMoney(userId, newAmount) {
 	User.findOne({ _id: userId }, (err, user) => {
 		if (err) {
 			return next(new Error(err));
 		}
-		console.log(user);
 		user.money = newAmount;
 		user.save();
 	});
 }
 
+//Caclulate distance between two points
 function distanceBetweenTwoPoints(lat1, lon1, lat2, lon2) {
 	const R = 6371; // Radius of the earth in km
 	const dLat = deg2rad(lat2 - lat1);
@@ -218,15 +197,29 @@ function distanceBetweenTwoPoints(lat1, lon1, lat2, lon2) {
 	return d * 1000;
 }
 
+//Convert degrees to radians
 function deg2rad(deg) {
 	return deg * (Math.PI / 180);
 }
 
+//Send a message to a user
+function sendMessageToUser(userId, messageData) {
+	let user = users.find((user) => user.id === userId);
+	let index = users.indexOf(user);
+	let client = clients[index];
+	if (client) {
+		client.send(JSON.stringify(messageData));
+	}
+}
+
+// Run update functions every seconds
 setInterval(() => {
 	updateAllActiveBases();
 	updateUsersMoney();
+
+	//DEBUG
 	// users.forEach((user) => {
-	// 	console.log(user.money);
+	// 	console.log(user.money + " --- " + user.id);
 	// });
 	// console.log("----------");
 }, 1000);
