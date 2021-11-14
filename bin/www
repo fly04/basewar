@@ -7,7 +7,6 @@
 var app = require("../app");
 var debug = require("debug")("basewar:server");
 var http = require("http");
-var controller = require("../controller");
 const { createWebSocketServer } = require("../ws");
 
 /**
@@ -87,8 +86,3 @@ function onListening() {
 	var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
 	debug("Listening on " + bind);
 }
-
-/**
- * Peforms several actions every cycle
- */
-controller.tick();
