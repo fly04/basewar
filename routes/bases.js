@@ -122,15 +122,20 @@ router.post("/:id/investments", utils.requireJson, function (req, res, next) {
 					return next(err);
 				}
 
-				// if (investment !== null) {
-				// 	throw new Error("This user already invested in this base.");
-				// }
-
-				console.log(investment);
+				// Check if user already invested in base - FONCTIONNE PAS
+				if (investment !== null) {
+					let error = new Error("This user already invested in this base.");
+					error.statuts = 400;
+					return next(error);
+					// return res.status(400).send("This user already invested in this base.");
+				}
 
 				//Checks if investor has enough money
 				if (investor.money < 0) {
-					throw new Error("Not enough money.");
+					let error = new Error("Not enough money.");
+					error.statuts = 400;
+					return next(error);
+					//return res.status(400).send("Not enough money.");
 				}
 
 				//Set baseId
@@ -142,7 +147,7 @@ router.post("/:id/investments", utils.requireJson, function (req, res, next) {
 						return next(err);
 					}
 
-					res
+					return res
 						.status(201)
 						.set(
 							"Location",
