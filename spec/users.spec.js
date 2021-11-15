@@ -43,7 +43,6 @@ describe("GET /users", function () {
 			User.create({ name: "Alice", password: "abcd" }),
 		]);
 
-		// Authenticated user.
 		user = users[0];
 	});
 
@@ -80,7 +79,6 @@ describe("DELETE /users", function () {
 			User.create({ name: "Kenny", password: "oh-my-god" }),
 		]);
 
-		// Authenticated user.
 		user = users[0];
 	});
 
@@ -88,7 +86,7 @@ describe("DELETE /users", function () {
 		const res = await supertest(app)
 			.delete(`/api/users/${user.id}`)
 			// .set("Authorization", `Bearer ${token}`)
-			.expect(204); // no content
+			.expect(204); // No content
 	});
 });
 
@@ -102,7 +100,6 @@ describe("PUT /users", function () {
 			User.create({ name: "Bob", password: "1234" }),
 		]);
 
-		// Authenticated user.
 		user = users[0];
 	});
 
