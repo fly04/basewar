@@ -8,7 +8,7 @@ const Investment = require("./models/investment");
 // Array of currently connected WebSocket clients.
 const clients = [];
 const users = [];
-const activeBases = [];
+let activeBases = [];
 
 // Create a WebSocket server using the specified HTTP server.
 exports.createWebSocketServer = function (httpServer) {
@@ -82,27 +82,28 @@ function setActiveUser(location, userId) {
 			id: user.id,
 			money: user.money,
 			location: location,
+			notification: false,
 		});
 	});
 }
 
-//Verify if any base is active and update its active users and income else removes it from activeBases array
 function updateAllActiveBases() {
-	Base.find({}).exec((err, bases) => {
+	Base.find({}).exec((err, storedBases) => {
 		if (err) {
 			return next(new Error(err));
 		}
 
 		//Checks if any of the connected users are close to any base
-		bases.forEach((base) => {
-			let baseLong = base.location.coordinates[0];
-			let baseLat = base.location.coordinates[1];
+		storedBases.forEach((storedBase) => {
+			let baseLong = storedBase.location.coordinates[0];
+			let baseLat = storedBase.location.coordinates[1];
 
 			let activeUsers = [];
 			users.forEach((user) => {
 				let userLong = user.location.coordinates[0];
 				let userLat = user.location.coordinates[1];
 
+				//If yes, add the users to activeUsers
 				if (
 					distanceBetweenTwoPoints(baseLat, baseLong, userLat, userLong) <=
 					settings.baseRange
@@ -111,38 +112,66 @@ function updateAllActiveBases() {
 				}
 			});
 
-			//If yes, add the users to bases activeUsers and add the base in the activeBases array
 			if (activeUsers.length > 0) {
-				let query = Investment.find({ baseId: base.id });
-				query.count(function (err, investmentCount) {
-					if (err) {
-						return next(err);
-					}
+				Investment.find({ baseId: storedBase.id })
+					.count()
+					.exec((err, investmentsCount) => {
+						if (err) {
+							return next(new Error(err));
+						}
 
-					//Remove old version of the active base
-					activeBases.splice(
-						activeBases.findIndex((base) => base.id === base.id),
-						1
-					);
-
-					//Add new version of the active base
-					activeBases.push({
-						id: base.id,
-						income:
+						let income =
 							settings.baseIncome +
-							investmentCount * settings.incomeIncreasePerInvestment,
-						activeUsers: activeUsers,
+							investmentsCount * settings.incomeIncreasePerInvestment;
+
+						let newBase = {
+							id: storedBase.id,
+							name: storedBase.name,
+							income: income,
+							activeUsers: activeUsers,
+							ownerId: storedBase.ownerId,
+						};
+
+						// upsert(activeBases, newBase);
+
+						const i = activeBases.findIndex(
+							(oldBase) => oldBase.id === newBase.id
+						);
+
+						if (i > -1) {
+							sendUserNotificationToOwner(i);
+							activeBases[i] = newBase;
+						} else {
+							activeBases.push(newBase);
+							const j = activeBases.findIndex((base) => base.id === newBase.id);
+							sendUserNotificationToOwner(j);
+						}
 					});
-				});
-			}
-			//If not, remove the base from activeBases array
-			else {
+			} else {
 				activeBases.splice(
-					activeBases.findIndex((base) => base.id === base.id),
+					activeBases.findIndex((base) => storedBase.id === base.id),
 					1
 				);
 			}
 		});
+	});
+}
+
+function sendUserNotificationToOwner(baseIndex) {
+	activeBases[baseIndex].activeUsers.forEach((user) => {
+		if (
+			user.notification === false &&
+			activeBases[baseIndex].ownerId != user.id
+		) {
+			sendMessageToUser(activeBases[baseIndex].ownerId, {
+				command: "notification",
+				params: {
+					message:
+						"Someone is close to your base " + activeBases[baseIndex].name,
+				},
+			});
+			user.notification = true;
+		}
 	});
 }
 
@@ -181,7 +210,7 @@ function updateUserMoney(userId, newAmount) {
 	});
 }
 
-//Caclulate distance between two points
+//Calculate distance between two points
 function distanceBetweenTwoPoints(lat1, lon1, lat2, lon2) {
 	const R = 6371; // Radius of the earth in km
 	const dLat = deg2rad(lat2 - lat1);
@@ -204,7 +233,7 @@ function deg2rad(deg) {
 
 //Send a message to a user
 function sendMessageToUser(userId, messageData) {
-	let user = users.find((user) => user.id === userId);
+	let user = users.find((user) => user.id == userId);
 	let index = users.indexOf(user);
 	let client = clients[index];
 	if (client) {
@@ -222,4 +251,17 @@ setInterval(() => {
 	// 	console.log(user.money + " --- " + user.id);
 	// });
 	// console.log("----------");
+
+	// activeBases.forEach((base) => {
+	// 	console.log(base.id + " --- income: " + base.income);
+	// 	base.activeUsers.forEach((user) => {
+	// 		console.log(user);
+	// 	});
+	// });
+
+	// 	// 	// base.activeUsers.forEach((user) => {
+	// 	// 	// 	console.log(user.id == base.ownerId);
+	// 	// 	// });
+
+	// console.log("--------------");
 }, 1000);
