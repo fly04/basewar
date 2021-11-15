@@ -6,8 +6,9 @@ const Base = require("./models/base");
 const Investment = require("./models/investment");
 
 // Array of currently connected WebSocket clients.
-const clients = [];
 const users = [];
+
+// Array of active bases i.e. there is at least one user nearby
 let activeBases = [];
 
 // Create a WebSocket server using the specified HTTP server.
@@ -20,9 +21,6 @@ exports.createWebSocketServer = function (httpServer) {
 	// Handle new client connections.
 	wss.on("connection", function (ws) {
 		debug("New WebSocket client connected");
-
-		// Keep track of clients.
-		clients.push(ws);
 
 		// Listen for messages sent by clients.
 		ws.on("message", (message) => {
@@ -38,47 +36,80 @@ exports.createWebSocketServer = function (httpServer) {
 			// Handle the message.
 			switch (parsedMessage.command) {
 				case "updateLocation":
-					handleUpdateLocation(parsedMessage.location, parsedMessage.userId);
+					handleUpdateLocation(
+						ws,
+						parsedMessage.location,
+						parsedMessage.userId
+					);
 					break;
 			}
 		});
 
 		// Clean up disconnected clients and update BDD.
 		ws.on("close", () => {
-			clients.splice(clients.indexOf(ws), 1);
-			let disconnectedUser = users.splice(clients.indexOf(ws), 1)[0];
-			updateUserMoney(disconnectedUser.id, disconnectedUser.money);
-			debug("WebSocket client disconnected");
+			let userToDisconnect = users.find((user) => {
+				return user.client === ws;
+			});
+
+			if (userToDisconnect) {
+				let disconnectedUser = users.splice(
+					users.indexOf(userToDisconnect),
+					1
+				)[0];
+
+				updateUserMoney(disconnectedUser.id, disconnectedUser.money);
+			}
 		});
 	});
 };
 
 // Update user location if user exists else add him to users array
-function handleUpdateLocation(location, userId) {
+function handleUpdateLocation(ws, location, userId) {
 	let userExistsAlready = false;
 
-	//Checks if the user is already in the users array
+	// Checks if the user is already in the users array
 	users.forEach((user) => {
-		if (user.id === userId) {
-			//If yes, update the user's location
+		if (user.client === ws) {
+			// If yes, update the user's location
 			userExistsAlready = true;
 			user.location = location;
 		}
 	});
 
-	//If not, add the user to the users array
+	// If not, add the user to the users array
 	if (!userExistsAlready) {
-		setActiveUser(location, userId);
+		setActiveUser(location, userId, ws);
 	}
 }
 
-//Add a new user to the users array
-function setActiveUser(location, userId) {
+// Add a new user to the users array
+function setActiveUser(location, userId, ws) {
 	User.findById(userId).exec((err, user) => {
 		if (err) {
-			return next(new Error(err));
+			// À CHECK
+			sendMessageToClient(ws, {
+				command: "error",
+				params: {
+					message: err.message,
+				},
+			});
+			return;
+			// return next(new Error(err));
 		}
+
+		if (!user) {
+			// À CHECK
+			sendMessageToClient(ws, {
+				command: "error",
+				params: {
+					message: "This userId does not correspond to any user.",
+				},
+			});
+			return;
+		}
+
 		users.push({
+			client: ws,
 			id: user.id,
 			money: user.money,
 			location: location,
@@ -90,10 +121,20 @@ function setActiveUser(location, userId) {
 function updateAllActiveBases() {
 	Base.find({}).exec((err, storedBases) => {
 		if (err) {
-			return next(new Error(err));
+			// À CHECK
+			users.forEach((user) => {
+				sendMessageToUser(user.id, {
+					command: "error",
+					params: {
+						message: err.message,
+					},
+				});
+			});
+			return;
+			// return next(new Error(err));
 		}
 
-		//Checks if any of the connected users are close to any base
+		// Checks if any of the connected users are close to any base
 		storedBases.forEach((storedBase) => {
 			let baseLong = storedBase.location.coordinates[0];
 			let baseLat = storedBase.location.coordinates[1];
@@ -103,7 +144,7 @@ function updateAllActiveBases() {
 				let userLong = user.location.coordinates[0];
 				let userLat = user.location.coordinates[1];
 
-				//If yes, add the users to activeUsers
+				// If yes, add the users to activeUsers
 				if (
 					distanceBetweenTwoPoints(baseLat, baseLong, userLat, userLong) <=
 					settings.baseRange
@@ -117,7 +158,17 @@ function updateAllActiveBases() {
 					.count()
 					.exec((err, investmentsCount) => {
 						if (err) {
-							return next(new Error(err));
+							// À CHECK
+							users.forEach((user) => {
+								sendMessageToUser(user.id, {
+									command: "error",
+									params: {
+										message: err.message,
+									},
+								});
+							});
+							return;
+							// return next(new Error(err));
 						}
 
 						let income =
@@ -131,8 +182,6 @@ function updateAllActiveBases() {
 							activeUsers: activeUsers,
 							ownerId: storedBase.ownerId,
 						};
-
-						// upsert(activeBases, newBase);
 
 						const i = activeBases.findIndex(
 							(oldBase) => oldBase.id === newBase.id
@@ -203,14 +252,22 @@ function updateUsersMoney() {
 function updateUserMoney(userId, newAmount) {
 	User.findOne({ _id: userId }, (err, user) => {
 		if (err) {
-			return next(new Error(err));
+			// À CHECK
+			sendMessageToUser(userId, {
+				command: "error",
+				params: {
+					message: err.message,
+				},
+			});
+			return;
+			// return next(new Error(err));
 		}
 		user.money = newAmount;
 		user.save();
 	});
 }
 
-//Calculate distance between two points
+// Calculate distance between two points
 function distanceBetweenTwoPoints(lat1, lon1, lat2, lon2) {
 	const R = 6371; // Radius of the earth in km
 	const dLat = deg2rad(lat2 - lat1);
@@ -226,42 +283,42 @@ function distanceBetweenTwoPoints(lat1, lon1, lat2, lon2) {
 	return d * 1000;
 }
 
-//Convert degrees to radians
+// Convert degrees to radians
 function deg2rad(deg) {
 	return deg * (Math.PI / 180);
 }
 
-//Send a message to a user
+// Send a message to a user
 function sendMessageToUser(userId, messageData) {
 	let user = users.find((user) => user.id == userId);
 	let index = users.indexOf(user);
-	let client = clients[index];
-	if (client) {
-		client.send(JSON.stringify(messageData));
+	if (user) {
+		users[index].client.send(JSON.stringify(messageData));
 	}
+}
+
+// Send a message to a client
+function sendMessageToClient(ws, messageData) {
+	ws.send(JSON.stringify(messageData));
 }
 
 // Run update functions every seconds
 setInterval(() => {
 	updateAllActiveBases();
 	updateUsersMoney();
-
 	//DEBUG
 	// users.forEach((user) => {
-	// 	console.log(user.money + " --- " + user.id);
+	// 	console.log(user.id);
 	// });
 	// console.log("----------");
-
 	// activeBases.forEach((base) => {
 	// 	console.log(base.id + " --- income: " + base.income);
 	// 	base.activeUsers.forEach((user) => {
-	// 		console.log(user);
+	// 		console.log(user.id + " --- money: " + user.money);
 	// 	});
 	// });
-
 	// 	// 	// base.activeUsers.forEach((user) => {
 	// 	// 	// 	console.log(user.id == base.ownerId);
 	// 	// 	// });
-
 	// console.log("--------------");
 }, 1000);
