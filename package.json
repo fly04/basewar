@@ -5,7 +5,8 @@
 	"scripts": {
 		"dev": "nodemon",
 		"start": "node ./bin/www",
-		"test": "cross-env DATABASE_URL=mongodb://localhost/basewar NODE_ENV=test nyc --reporter=html mocha spec/**/*.spec.js"
+		"test": "cross-env DATABASE_URL=mongodb://localhost/basewar-testing mocha spec/**/*.spec.js",
+		"test-backup": "cross-env DATABASE_URL=mongodb://localhost/basewar-testing NODE_ENV=test nyc --reporter=html mocha spec/**/*.spec.js"
 	},
 	"dependencies": {
 		"bcrypt": "^5.0.1",
