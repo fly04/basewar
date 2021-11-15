@@ -4,6 +4,7 @@ const app = require("../app");
 const mongoose = require("mongoose");
 const { cleanUpDatabase, generateValidJwt } = require("./utils");
 const User = require("../models/user");
+const faker = require("faker");
 
 const expectedFields = ["id", "name", "bases", "link", "money"];
 
@@ -12,20 +13,22 @@ beforeEach(cleanUpDatabase); // clean database before each test
 /* POST users
  ********************************/
 describe("POST /users", function () {
+	let user = {
+		name: faker.name.findName(),
+		password: faker.internet.password(),
+	};
+
 	it("should create a user", async function () {
 		const res = await supertest(app)
 			.post("/api/users") // make a POST request
-			.send({
-				name: "John Doe",
-				password: "1234",
-			}) // send method is serialized json by default
+			.send(user) // send method is serialized json by default
 			.expect(201) // assertion: must specify the expected response status code
 			.expect("Content-Type", /json/); // expected value in response header
 
 		// Check that the response body is a JSON object with exactly the properties we expect.
 		expect(res.body).to.be.an("object");
 		expect(res.body.id).to.be.a("string");
-		expect(res.body.name).to.equal("John Doe");
+		expect(res.body.name).to.equal(user.name);
 		expect(res.body.bases).to.be.a("string");
 		expect(res.body.link).to.be.a("string");
 		expect(res.body.money).to.equal(0);
@@ -40,7 +43,10 @@ describe("GET /users", function () {
 	let user;
 	beforeEach(async function () {
 		const users = await Promise.all([
-			User.create({ name: "Alice", password: "abcd" }),
+			User.create({
+				name: faker.name.findName(),
+				password: faker.internet.password(),
+			}),
 		]);
 
 		user = users[0];
@@ -61,7 +67,7 @@ describe("GET /users", function () {
 		// Second user
 		expect(res.body[0]).to.be.an("object");
 		expect(res.body[0].id).to.be.a("string");
-		expect(res.body[0].name).to.equal("Alice");
+		expect(res.body[0].name).to.equal(user.name);
 		expect(res.body[0].bases).to.be.a("string");
 		expect(res.body[0].link).to.be.a("string");
 		expect(res.body[0].money).to.equal(0);
@@ -97,7 +103,10 @@ describe("PUT /users", function () {
 	let user;
 	beforeEach(async function () {
 		const users = await Promise.all([
-			User.create({ name: "Bob", password: "1234" }),
+			User.create({
+				name: faker.name.findName(),
+				password: faker.internet.password(),
+			}),
 		]);
 
 		user = users[0];
