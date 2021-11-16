@@ -31,7 +31,7 @@ const baseSchema = new Schema({
 			// Validate that the userId is a valid ObjectId
 			// and references an existing user
 			validator: validateUser,
-			message: (props) => props.reason.message,
+			message: props => props.reason.message,
 		},
 	},
 	location: {
@@ -77,7 +77,7 @@ function validateUser(value) {
 		.model("User")
 		.findOne({ _id: ObjectId(value) })
 		.exec()
-		.then((user) => {
+		.then(user => {
 			if (!user) {
 				throw new Error("user not found");
 			}
@@ -96,7 +96,7 @@ function validateBaseNameUniqueness(value) {
 		.where("name")
 		.equals(value)
 		.exec()
-		.then((existingBase) => {
+		.then(existingBase => {
 			return !existingBase || existingBase._id.equals(this._id);
 		});
 }
@@ -128,6 +128,7 @@ function isLongitude(value) {
  * and includes the owner's data if it has been populated.
  */
 function transformJsonBase(doc, json, options) {
+	console.log(doc.ownerId + "lolololol");
 	json.owner = doc.ownerId.toJSON();
 	delete json.ownerId;
 	delete json._id;
