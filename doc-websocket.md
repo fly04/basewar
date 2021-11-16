@@ -3,7 +3,7 @@
 Le endpoint pour se connecter en WebSocket est le suivant :
 
 ```
-ws://http://basewar.herokuapp.com/api/
+ws://basewar.herokuapp.com/api/
 ```
 
 
