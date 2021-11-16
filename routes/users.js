@@ -30,7 +30,7 @@ const findUser = (req, res, next) => {
  * Save user in database
  */
 const saveUser = (req, res, next) => {
-	req.user.save(err => {
+	req.user.save((err) => {
 		if (err) {
 			return next(new Error(err));
 		}
@@ -43,6 +43,7 @@ const saveUser = (req, res, next) => {
  */
 const addUser = (req, res, next) => {
 	req.user = new User(req.body);
+	req.user.money = 0;
 	next();
 };
 
@@ -50,7 +51,7 @@ const addUser = (req, res, next) => {
  * Remove user
  */
 const removeUser = (req, res, next) => {
-	req.user.remove(err => {
+	req.user.remove((err) => {
 		if (err) return next(new Error(err));
 		next();
 	});
@@ -60,9 +61,10 @@ const removeUser = (req, res, next) => {
  * Update user
  */
 const updateUser = (req, res, next) => {
-	User.findByIdAndUpdate(req.params.id, req.body, { new: true }, err => {
+	// TODO: Remettre l'argent tel qu'il était au début
+	User.findByIdAndUpdate(req.params.id, req.body, { new: true }, (err) => {
 		if (err) return next(new Error(err));
-		req.user = req.body;
+		req.user = req.body; // semble inutile?
 		next();
 	});
 };
@@ -137,7 +139,6 @@ router.get("/", function (req, res, next) {
 			if (err) {
 				return next(err);
 			}
-
 			res.send(users);
 		});
 	});

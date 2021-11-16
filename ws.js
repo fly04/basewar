@@ -86,7 +86,6 @@ function handleUpdateLocation(ws, location, userId) {
 function setActiveUser(location, userId, ws) {
 	User.findById(userId).exec((err, user) => {
 		if (err) {
-			// À CHECK
 			sendMessageToClient(ws, {
 				command: "error",
 				params: {
@@ -94,11 +93,9 @@ function setActiveUser(location, userId, ws) {
 				},
 			});
 			return;
-			// return next(new Error(err));
 		}
 
 		if (!user) {
-			// À CHECK
 			sendMessageToClient(ws, {
 				command: "error",
 				params: {
@@ -121,7 +118,6 @@ function setActiveUser(location, userId, ws) {
 function updateAllActiveBases() {
 	Base.find({}).exec((err, storedBases) => {
 		if (err) {
-			// À CHECK
 			users.forEach((user) => {
 				sendMessageToUser(user.id, {
 					command: "error",
@@ -131,7 +127,6 @@ function updateAllActiveBases() {
 				});
 			});
 			return;
-			// return next(new Error(err));
 		}
 
 		// Checks if any of the connected users are close to any base
@@ -158,7 +153,6 @@ function updateAllActiveBases() {
 					.count()
 					.exec((err, investmentsCount) => {
 						if (err) {
-							// À CHECK
 							users.forEach((user) => {
 								sendMessageToUser(user.id, {
 									command: "error",
@@ -168,7 +162,6 @@ function updateAllActiveBases() {
 								});
 							});
 							return;
-							// return next(new Error(err));
 						}
 
 						let income =
@@ -215,8 +208,8 @@ function sendUserNotificationToOwner(baseIndex) {
 			sendMessageToUser(activeBases[baseIndex].ownerId, {
 				command: "notification",
 				params: {
-					message:
-						"Someone is close to your base " + activeBases[baseIndex].name,
+					baseId: activeBases[baseIndex].id,
+					baseName: activeBases[baseIndex].name,
 				},
 			});
 			user.notification = true;
@@ -252,7 +245,6 @@ function updateUsersMoney() {
 function updateUserMoney(userId, newAmount) {
 	User.findOne({ _id: userId }, (err, user) => {
 		if (err) {
-			// À CHECK
 			sendMessageToUser(userId, {
 				command: "error",
 				params: {
@@ -260,7 +252,6 @@ function updateUserMoney(userId, newAmount) {
 				},
 			});
 			return;
-			// return next(new Error(err));
 		}
 		user.money = newAmount;
 		user.save();

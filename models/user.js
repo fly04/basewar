@@ -35,25 +35,6 @@ userSchema.virtual("bases").get(function () {
 	return `${baseUrl}/bases?ownerId=${this.id}`;
 });
 
-// Validate a GeoJSON coordinates array (longitude, latitude and optional altitude). -- dupliqué dans model/base
-function validateGeoJsonCoordinates(value) {
-	return (
-		Array.isArray(value) &&
-		value.length >= 2 &&
-		value.length <= 3 &&
-		isLongitude(value[0]) &&
-		isLatitude(value[1])
-	);
-}
-
-function isLatitude(value) {
-	return value >= -90 && value <= 90;
-}
-
-function isLongitude(value) {
-	return value >= -180 && value <= 180;
-}
-
 function transformJsonUser(doc, json, options) {
 	// Remove the id, hashed password and version from response.
 	delete json._id;
