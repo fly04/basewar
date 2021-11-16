@@ -205,7 +205,7 @@ router.get("/:id", findUser, (req, res) => {
  * @apiName GetUsers
  * @apiGroup Users
  * @apiVersion 1.0.0
- * @apiDescription Get a pagniated list of all users
+ * @apiDescription Get a paginated list of all users
  *
  * @apiUse UserInResponseBody
  *

@@ -26,7 +26,39 @@ const removeBaseInvestments = baseId => {
 /********************************
  * HTTP Methods
  ********************************/
-/* POST new base */
+
+/**
+ *
+ * @api {post} /api/bases Create new base
+ * @apiName CreateBase
+ * @apiGroup Bases
+ * @apiVersion 1.0.0
+ * @apiDescription Create a new base
+ *
+ * @apiUse BaseInRequestBody
+ * @apiUse BaseInResponseBody
+ *
+ * @apiParamExample Example
+ * POST /api/bases HTTP/1.1
+ * Content-Type: application/json
+ *
+ * {
+ * 	"name": "Base de test",
+ * 	"ownerId": "6193ebd40b4638972f476187",
+ * 	"location": {
+ * 		"type": "Point",
+ * 		"coordinates": [
+ * 			-1.5,
+ * 			1.5
+ * 		]
+ * 	}
+ * }
+ *
+ * @apiSuccessExample 201 Created
+ * HTTP/1.1 201 Created
+ * Content-Type: application/json
+ * Location: http://basewar.herokuapp.com/api/users/6193ebd40b4638972f476187
+ */
 router.post("/", utils.requireJson, authenticate, function (req, res, next) {
 	//Verify if userId is set and correct
 	if (!req.body.ownerId || !ObjectId.isValid(req.body.ownerId)) {
@@ -129,7 +161,47 @@ router.post("/", utils.requireJson, authenticate, function (req, res, next) {
 	});
 });
 
-/* GET bases listing. */
+/**
+ *
+ * @api {get} /api/bases Get all bases
+ * @apiName GetBases
+ * @apiGroup Bases
+ * @apiVersion  1.0.0
+ * @apiDescription Get all bases
+ *
+ * @apiUse BaseInResponseBody
+ *
+ * @apiParam (URL query parameters) {String} [ownerId] The user id of the owner of the base.
+ *
+ * @apiParamExample GET /api/bases?ownerId=5a9f9d8e8f8b8a0e8c8b4567 HTTP/1.1
+ *
+ *
+ * @apiSuccessExample 200 OK
+ * HTTP/1.1 200 OK
+ * Content-Type: application/json
+ *
+ * [
+ *   {
+ *       "location": {
+ *           "type": "Point",
+ *           "coordinates": [
+ *               -23.856077,
+ *               20.848447
+ *           ]
+ *       },
+ *       "name": "Robin Base",
+ *       "investments": "http://localhost:3000/api/bases/6193ebd40b4638972f476187/investments/",
+ *       "id": "6193ebd40b4638972f476187",
+ *       "owner": {
+ *           "name": "robin",
+ *           "money": 0,
+ *           "link": "http://localhost:3000/api/users/6193e4912e17bb53efb4aeb2",
+ *           "bases": "http://localhost:3000/api/bases?ownerId=6193e4912e17bb53efb4aeb2",
+ *           "id": "6193e4912e17bb53efb4aeb2"
+ *       }
+ *   }
+ * ]
+ */
 router.get("/", function (req, res, next) {
 	const countQuery = queryBases(req);
 	countQuery.count(function (err, total) {
@@ -166,8 +238,44 @@ router.get("/", function (req, res, next) {
 	});
 });
 
-/* GET base by id
- ********************************/
+/**
+ * @api {get} /api/bases/:id Get a base
+ * @apiName GetBase
+ * @apiGroup Base
+ * @apiVersion 1.0.0
+ * @apiDescription Get a base
+ *
+ * @apiUse BaseIdInUrlPath
+ * @apiUse BaseInResponseBody
+ * @apiUse BaseNotFoundError
+ *
+ * @apiExample Example
+ * GET /api/bases/6193f60b8bff41c7e8ee29f3 HTTP/1.1
+ *
+ * @apiSuccessExample 200 OK
+ * HTTP/1.1 200 OK
+ * Content-Type: application/json
+ *
+ *   {
+ *     "location": {
+ *       "type": "Point",
+ *       "coordinates": [
+ *           -23.856077,
+ *          20.848447
+ *       ]
+ *    },
+ *    "name": "Base de test",
+ *    "investments": "http://basewar.herokuapp.com/api/bases/6193ebd40b4638972f476187/investments/",
+ *    "id": "6193ebd40b4638972f476187",
+ *    "owner": {
+ * 	  "name": "Richman",
+ * 	  "money": 0,
+ * 	  "link": "http://basewar.herokuapp.com/api/users/6193e4912e17bb53efb4aeb2",
+ * 	  "bases": "http://basewar.herokuapp.com/api/bases?ownerId=6193e4912e17bb53efb4aeb2",
+ * 	  "id": "6193e4912e17bb53efb4aeb2"
+ *   }
+ * }
+ */
 router.get("/:id", function (req, res, next) {
 	let query = Base.findById(req.params.id);
 
@@ -184,8 +292,22 @@ router.get("/:id", function (req, res, next) {
 	});
 });
 
-/* DELETE base by id
- ********************************/
+/**
+ * @api {delete} /api/bases/:id Delete a base
+ * @apiName DeleteBase
+ * @apiGroup Bases
+ * @apiVersion 1.0.0
+ * @apiDescription Delete a base
+ *
+ * @apiUse BaseIdInUrlPath
+ * @apiUse BaseNotFoundError
+ *
+ * @apiExample Example
+ *  DELETE /api/bases/6193f60b8bff41c7e8ee29f3 HTTP/1.1
+ *
+ * @apiSuccessExample 204 No Content
+ *  HTTP/1.1 204 No Content
+ */
 router.delete("/:id", authenticate, function (req, res, next) {
 	// Authorizations
 	if (req.currentUserId !== req.params.id) {
@@ -211,7 +333,39 @@ router.delete("/:id", authenticate, function (req, res, next) {
 });
 
 /**
- * PATCH base
+ *
+ * @api {patch} /api/base/:baseId/investment/:id Update an investment
+ * @apiName UpdateInvestment
+ * @apiGroup Investment
+ * @apiVersion  1.0.0
+ * @apiDescription Update an investment
+ *
+ * @apiUse InvestmentInResponseBody
+ * @apiUse InvestmentInRequestBody
+ *
+ * @apiUse BaseIdInUrlPath
+ * @apiUse BaseNotFoundError
+ *
+ * @apiExample Example
+ * PATCH /api/base/6193f60b8bff41c7e8ee29f3/investment/6193f60b8bff41c7e8ee29f4 HTTP/1.1
+ *
+ * {
+ * 	"baseId": "6193f60b8bff41c7e8ee29f3",
+ * 	"investorId": "61940744cf6b06bd2b29ac77",
+ * }
+ *
+ * @apiSuccessExample 200 OK
+ * HTTP/1.1 200 OK
+ * Content-Type: application/json
+ *
+ * {
+ *   "createdAt": "2021-11-16T19:35:27.048Z",
+ *   "link": "http://basewar.herokuapp.com/api/bases/6193ebd40b4638972f476187/investments/619407ff93c69ba4474ec2ee",
+ *   "base": "http://basewar.herokuapp.com/api/bases/6193ebd40b4638972f476187",
+ *   "id": "619407ff93c69ba4474ec2ee",
+ *   "investor": "61940744cf6b06bd2b29ac77"
+ * }
+ *
  */
 router.patch("/:id", utils.requireJson, authenticate, (req, res, next) => {
 	// Authorizations
@@ -248,8 +402,86 @@ router.patch("/:id", utils.requireJson, authenticate, (req, res, next) => {
 	});
 });
 
-/* POST new investement
- ********************************/
+/**
+ * @api {post} /api/bases/:id/investments Create a new investment
+ * @apiName CreateInvestment
+ * @apiGroup Investment
+ * @apiVersion  1.0.0
+ * @apiDescription Create a new investment
+ *
+ * @apiUse InvestmentInResponseBody
+ * @apiUse InvestmentInRequestBody
+ *
+ * @apiUse BaseIdInUrlPath
+ * @apiUse BaseNotFoundError
+ *
+ * @apiError (Object) 403 Forbidden The user id does not match with the investor id
+ * @apiErrorExample 403 Forbidden
+ * HTTP/1.1 403 Forbidden
+ * Content-Type: application/json
+ *
+ * You can't invest for other users
+ *
+ * @apiError (Object) 404 Not Found The base id does not match with the base id in the url
+ * @apiErrorExample 404 Not Found
+ * HTTP/1.1 404 Not Found
+ * Content-Type: application/json
+ *
+ * Base not found
+ *
+ * @apiError (Object) 400 Bad Request The owner of the base is the same as the investor
+ * @apiErrorExample 400 Bad Request
+ * HTTP/1.1 400 Bad Request
+ * Content-Type: application/json
+ *
+ * The owner of the base can't invest in it
+ *
+ * @apiError (Object) 400 Bad Request The number of investments of the investor for the current base is greater than 0
+ * @apiErrorExample 400 Bad Request
+ * HTTP/1.1 400 Bad Request
+ * Content-Type: application/json
+ *
+ * This user already invested in this base.
+ *
+ * @apiError (Object) 400 Bad Request The number of investments of the base is greater than 5
+ * @apiErrorExample 400 Bad Request
+ * HTTP/1.1 400 Bad Request
+ * Content-Type: application/json
+ *
+ * This base has already too much investments (max. 5)
+ *
+ * @apiError (Object) 400 Bad Request The money of the investor is equal or less than 0
+ * @apiErrorExample 400 Bad Request
+ * HTTP/1.1 400 Bad Request
+ * Content-Type: application/json
+ *
+ * Not enough money.
+ *
+ *
+ * @apiExample Example
+ * POST /api/bases/6193f60b8bff41c7e8ee29f3/investments HTTP/1.1
+ * Content-Type: application/json
+ *
+ * {
+ * 	"baseId": "6193f60b8bff41c7e8ee29f3",
+ * 	"investorId": "6193e4912e17bb53efb4aeb2"
+ * }
+ *
+ *
+ * @apiSuccessExample 201 Created
+ * HTTP/1.1 201 Created
+ * Content-Type: application/json
+ * Location: http://basewar.herokuapp.com/api/bases/6193f60b8bff41c7e8ee29f3/investments/6193f60b8bff41c7e8ee29f4
+ *
+ * {
+ *   "createdAt": "2021-11-16T19:35:27.048Z",
+ *   "link": "http://basewar.herokuapp.com/api/bases/6193f60b8bff41c7e8ee29f3/investments/6193f60b8bff41c7e8ee29f4",
+ *   "base": "http://basewar.herokuapp.com/api/bases/6193f60b8bff41c7e8ee29f3",
+ *   "id": "6193f60b8bff41c7e8ee29f4",
+ *   "investor": "61940744cf6b06bd2b29ac77"
+ * }
+ *
+ */
 router.post(
 	"/:id/investments",
 	authenticate,
@@ -352,7 +584,42 @@ router.post(
 	}
 );
 
-/* GET all investment from a base */
+/**
+ *
+ * @api {get} /api/bases/:id/investments Get all investments of a base
+ * @apiName GetInvestments
+ * @apiGroup Investments
+ * @apiVersion  1.0.0
+ * @apiDescription Get all investments of a base
+ * 
+ * @apiUse InvestmentInResponseBody
+ * @apiUse InvestmentInRequestBody
+ *
+ * @apiUse BaseIdInUrlPath
+ *
+ * @apiExample Example
+ * GET /api/bases/6193f60b8bff41c7e8ee29f3/investments HTTP/1.1
+
+ * {
+ * 	"baseId": "6193f60b8bff41c7e8ee29f3",
+ * 	"investorId": "6193e4912e17bb53efb4aeb2"
+ * }
+ *
+ *
+ * @apiSuccessExample 200 OK
+ * HTTP/1.1 200 OK
+ * Content-Type: application/json
+ * 
+ * {
+ *   "createdAt": "2021-11-16T19:35:27.048Z",
+ *   "link": "http://basewar.herokuapp.com/api/bases/6193f60b8bff41c7e8ee29f3/investments/6193f60b8bff41c7e8ee29f4",
+ *   "base": "http://basewar.herokuapp.com/api/bases/6193f60b8bff41c7e8ee29f3",
+ *   "id": "6193f60b8bff41c7e8ee29f4",
+ *   "investor": "61940744cf6b06bd2b29ac77"
+ * }
+ *
+ *
+ */
 router.get("/:id/investments", function (req, res, next) {
 	let query = Investment.find({ baseId: req.params.id });
 	query.count(function (err, total) {
@@ -376,8 +643,35 @@ router.get("/:id/investments", function (req, res, next) {
 	});
 });
 
-/* GET investment by id
- ********************************/
+/**
+ *
+ * @api {get} /api/base/:baseId/investments/:id Get an investment
+ * @apiName GetInvestment
+ * @apiGroup Investments
+ * @apiVersion  1.0.0
+ * @apiDescription Get an investment
+ *
+ * @apiUse InvestmentInResponseBody
+ * @apiUse InvestmentInRequestBody
+ *
+ * @apiUse BaseIdInUrlPath
+ *
+ *
+ * @apiExample Example
+ * GET /api/bases/6193f60b8bff41c7e8ee29f3/investments/6193f60b8bff41c7e8ee29f4 HTTP/1.1
+ *
+ * @apiSuccessExample 200 OK
+ * HTTP/1.1 200 OK
+ * Content-Type: application/json
+ *
+ * {
+ *   "createdAt": "2021-11-16T19:35:27.048Z",
+ *   "link": "http://basewar.herokuapp.com/api/bases/6193f60b8bff41c7e8ee29f3/investments/6193f60b8bff41c7e8ee29f4",
+ *   "base": "http://basewar.herokuapp.com/api/bases/6193f60b8bff41c7e8ee29f3",
+ *   "id": "6193f60b8bff41c7e8ee29f4",
+ *   "investor": "61940744cf6b06bd2b29ac77"
+ * }
+ */
 router.get("/:baseId/investments/:id", function (req, res, next) {
 	let query = Investment.findById(req.params.id);
 
@@ -390,8 +684,25 @@ router.get("/:baseId/investments/:id", function (req, res, next) {
 	});
 });
 
-/* DELETE investment by id
- ********************************/
+/**
+ *
+ * @api {delete} /api/bases/:baseId/investments/:id Delete an investment
+ * @apiName DeleteInvestment
+ * @apiGroup Investments
+ * @apiVersion  1.0.0
+ * @apiDescription Get an investment
+ *
+ * @apiUse InvestmentInResponseBody
+ * @apiUse InvestmentInRequestBody
+ *
+ * @apiUse BaseIdInUrlPath
+ *
+ * @apiExample Example
+ * DELETE /api/bases/6193f60b8bff41c7e8ee29f3/investments/6193f60b8bff41c7e8ee29f4 HTTP/1.1
+ *
+ * @apiSuccessExample 204 No Content
+ *  HTTP/1.1 204 No Content
+ */
 router.delete(
 	"/:baseId/investments/:id",
 	authenticate,
@@ -430,3 +741,44 @@ function queryBases(req) {
 }
 
 module.exports = router;
+/**
+ * @apiDefine BaseInResponseBody
+ * @apiSuccess (Response body) {String} name The name of the base
+ * @apiSuccess (Response body) {String} location.type The type of the location ("Point")
+ * @apiSuccess (Response body) {Array} location.coordinates The latitude and longitude of the base
+ * @apiSuccess (Response body) {String} ownerId The id of the owner of the base
+ */
+
+/**
+ * @apiDefine BaseInRequestBody
+ * @apiParam (Request body) {String{3..30}} name The name of the base
+ * @apiParam (Request body) {String} location.type The type of the location: must be "Point"
+ * @apiParam (Request body) {Array} location.coordinates The latitude and longitude of the base
+ * @apiParam (Request body) {String} ownerId The id of the owner of the base
+ */
+
+/**
+ * @apiDefine InvestmentInResponseBody
+ * @apiSuccess (Response body) {String} createdAt The date of the creation
+ * @apiSuccess (Response body) {String} link The link to the investment
+ * @apiSuccess (Response body) {String} base The link to the base
+ * @apiSuccess (Response body) {String} id The id of the investment
+ * @apiSuccess (Response body) {String} investor The user id of the investment
+ *
+ */
+
+/**
+ * @apiDefine InvestmentInRequestBody
+ * @apiParam (Request body) {String} baseId The id of the base
+ * @apiParam (Request body) {String} investorId The id of the use for the investment
+ */
+
+/**
+ * @apiDefine BaseValidationError
+ * @apiError (Object)
+ */
+
+/**
+ * @apiDefine BaseIdInUrlPath
+ * @apiParam (URL path parameters) {String} id The id of the base
+ */
