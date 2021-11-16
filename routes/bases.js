@@ -148,24 +148,31 @@ router.post(
 	async function (req, res, next) {
 		const newInvestment = new Investment(req.body);
 
-		// Checks if base exists
-		await utils.validateBase(req.params.id);
-
-		// Checks if investor exists
-		await utils.validateUser(newInvestment.investorId);
-
-		const investor = await User.findById(newInvestment.investorId);
-		const base = await Base.findById(req.params.id);
-		const investmentsInCurrentBase = await Investment.find({
-			baseId: base.id,
+		// Find investor
+		const investor = await User.findById(newInvestment.investorId).exec(err => {
+			if (err) return next(err);
 		});
+
+		// Find base
+		const currentBase = await Base.findById(req.params.id).exec(err => {
+			if (err) return next(err);
+		});
+
+		// How many investments are in the current base
+		const investmentsInCurrentBase = await Investment.find({
+			baseId: currentBase.id,
+		}).exec(err => {
+			if (err) return next(err);
+		});
+
+		// How many investments the investor has in the current investor
 		const investorInvestmentsInCurrentBase = await Investment.find({
-			baseId: base.id,
+			baseId: currentBase.id,
 			investorId: investor.id,
 		});
 
 		// Check if the investor is not the owner of the base
-		if (base.ownerId.equals(newInvestment.investorId)) {
+		if (currentBase.ownerId.equals(newInvestment.investorId)) {
 			let error = new Error("The owner of the base can't invest in it");
 			error.status = 400;
 			return next(error);
