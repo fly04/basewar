@@ -18,7 +18,13 @@ const config = require("../config");
  */
 const findUser = (req, res, next) => {
 	User.findById(req.params.id).exec((err, user) => {
-		if (err) return next(err);
+		if (err) {
+			return next(err);
+		} else if (!user) {
+			let error = new Error("User not found");
+			error.status = 404;
+			return next(error);
+		}
 		req.user = user;
 		next();
 	});
@@ -28,7 +34,7 @@ const findUser = (req, res, next) => {
  * Save user in database
  */
 const saveUser = (req, res, next) => {
-	req.user.save(err => {
+	req.user.save((err) => {
 		if (err) return next(err);
 		next();
 	});
@@ -47,7 +53,32 @@ const addUser = (req, res, next) => {
  * Remove user
  */
 const removeUser = (req, res, next) => {
-	req.user.remove(err => {
+	Base.find({ ownerId: req.user.id }).exec((err, bases) => {
+		if (err) {
+			return next(err);
+		}
+
+		if (bases.length > 0) {
+			bases.forEach((base) => {
+				Investments.find({ baseId: base.id }).exec((err, investments) => {
+					if (err) {
+						return next(err);
+					}
+
+					if (investments.length > 0) {
+						investments.forEach((investment) => {
+							investment.remove();
+						});
+					}
+
+					base.remove();
+				});
+			});
+		}
+	});
+
+	return;
+	req.user.remove((err) => {
 		if (err) return next(new Error(err));
 		next();
 	});

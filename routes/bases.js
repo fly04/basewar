@@ -26,7 +26,7 @@ const removeBaseInvestments = (baseId) => {
  * HTTP Methods
  ********************************/
 /* POST new base */
-router.post("/", utils.requireJson, async function (req, res, next) {
+router.post("/", utils.requireJson, function (req, res, next) {
 	//Verify if userId is set and correct
 	if (!req.body.ownerId || !ObjectId.isValid(req.body.ownerId)) {
 		let error = new Error("The user id is not valid or missing.");
@@ -40,63 +40,84 @@ router.post("/", utils.requireJson, async function (req, res, next) {
 		long: req.body.location.coordinates[1],
 	};
 
-	const existingBases = await Base.find();
-	let isFarEnough = true;
-
-	existingBases.forEach((base) => {
-		let existingBase = {
-			lat: base.location.coordinates[0],
-			long: base.location.coordinates[1],
-		};
-
-		if (
-			utils.distanceBetweenTwoPoints(
-				postedBase.lat,
-				postedBase.long,
-				existingBase.lat,
-				existingBase.long
-			) < settings.maxDistanceBetweenBases
-		) {
-			isFarEnough = false;
-		}
-	});
-
-	if (!isFarEnough) {
-		let error = new Error(
-			"Your base must be created at least " +
-				settings.maxDistanceBetweenBases +
-				"m away from other bases."
-		);
-		error.status = 400;
-		return next(error);
-	}
-
-	// Verify if the user has enough money to create a base
-	const user = await User.findById(req.body.ownerId);
-	const basesOwnedByUser = await Base.find({ ownerId: user.id });
-	const basePrice = basesOwnedByUser.length * settings.initialBasePrice;
-
-	if (user.money < basePrice) {
-		let error = new Error("You don't have enough money to create a base.");
-		error.status = 400;
-		return next(error);
-	}
-
-	//Remove basePrice from user's money
-	user.money -= basePrice;
-	user.save();
-
-	// Create the base and save it in the database
-	const newBase = new Base(req.body);
-	newBase.save(function (err, savedBase) {
+	Base.find().exec((err, existingBases) => {
 		if (err) {
 			return next(err);
 		}
 
-		res
-			.status(201)
-			.set("Location", `${config.baseUrl}/bases/${savedBase._id}`)
-			.send(savedBase);
+		let isFarEnough = true;
+
+		existingBases.forEach((base) => {
+			let existingBase = {
+				lat: base.location.coordinates[0],
+				long: base.location.coordinates[1],
+			};
+
+			if (
+				utils.distanceBetweenTwoPoints(
+					postedBase.lat,
+					postedBase.long,
+					existingBase.lat,
+					existingBase.long
+				) < settings.maxDistanceBetweenBases
+			) {
+				isFarEnough = false;
+			}
+		});
+
+		if (!isFarEnough) {
+			let error = new Error(
+				"Your base must be created at least " +
+					settings.maxDistanceBetweenBases +
+					"m away from other bases."
+			);
+			error.status = 400;
+			return next(error);
+		}
+
+		// Verify if the user has enough money to create a base
+		User.findById(req.body.ownerId).exec((err, user) => {
+			if (err) {
+				return next(err);
+			} else if (!user) {
+				let error = new Error("User not found.");
+				error.status = 404;
+				return next(error);
+			}
+
+			Base.find({ ownerId: user.id }).exec((err, basesOwnedByUser) => {
+				if (err) {
+					return next(err);
+				}
+
+				const basePrice = basesOwnedByUser.length * settings.initialBasePrice;
+
+				if (user.money < basePrice) {
+					let error = new Error(
+						"You don't have enough money to create a base."
+					);
+					error.status = 400;
+					return next(error);
+				}
+
+				//Remove basePrice from user's money
+				user.money -= basePrice;
+				user.save();
+
+				// Create the base and save it in the database
+				const newBase = new Base(req.body);
+				newBase.save(function (err, savedBase) {
+					if (err) {
+						return next(err);
+					}
+
+					res
+						.status(201)
+						.set("Location", `${config.baseUrl}/bases/${savedBase._id}`)
+						.send(savedBase);
+				});
+			});
+		});
 	});
 });
 
@@ -142,6 +163,10 @@ router.get("/:id", function (req, res, next) {
 	query.exec(function (err, base) {
 		if (err) {
 			return next(err);
+		} else if (!base) {
+			let error = new Error("Base not found.");
+			error.status = 404;
+			return next(error);
 		}
 		res.send(base);
 	});
@@ -153,6 +178,10 @@ router.delete("/:id", function (req, res, next) {
 	Base.findById(req.params.id).exec(function (err, base) {
 		if (err) {
 			return next(err);
+		} else if (!base) {
+			let error = new Error("Base not found.");
+			error.status = 404;
+			return next(error);
 		}
 
 		removeBaseInvestments(base.id);
@@ -167,41 +196,20 @@ router.delete("/:id", function (req, res, next) {
  */
 router.patch("/:id", utils.requireJson, (req, res, next) => {
 	Base.findOne({ _id: req.params.id }).exec((err, base) => {
-		if (err) return next(err);
+		if (err) {
+			return next(err);
+		} else if (!base) {
+			let error = new Error("Base not found.");
+			error.status = 404;
+			return next(error);
+		}
 
 		if (req.body.name !== undefined) {
 			base.name = req.body.name;
 		}
 
-		// Check if user already invested in base
-		if (investorInvestmentsInCurrentBase.length > 0) {
-			let error = new Error("This user already invested in this base.");
-			error.status = 400;
-			return next(error);
-		}
-
-		// Check if there is not too much investments already
-		if (investmentsInCurrentBase.length >= 5) {
-			let error = new Error(
-				"This base has already too much investments (max. 5)"
-			);
-			error.status = 400;
-			return next(error);
-		}
-
-		// Checks if investor has enough money
-		if (investor.money <= settings.initialInvestmentPrice) {
-			let error = new Error("Not enough money to invest in this base.");
-			error.status = 400;
-			return next(error);
-		}
-
-		//Remove investment price from investor's money
-		investor.money -= settings.initialInvestmentPrice;
-		investor.save();
-
 		// Store investment
-		newInvestment.save(function (err, savedInvestment) {
+		base.save(function (err, savedBase) {
 			if (err) {
 				return next(err);
 			}
@@ -274,6 +282,10 @@ router.post("/:id/investments", utils.requireJson, function (req, res, next) {
 						error.status = 400;
 						return next(error);
 					}
+
+					//Remove investment price from investor's money
+					investor.money -= settings.initialInvestmentPrice;
+					investor.save();
 
 					// Store investment
 					newInvestment.save(function (err, savedInvestment) {
