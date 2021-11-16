@@ -59,7 +59,7 @@ baseSchema.set("toJSON", {
 });
 
 baseSchema.virtual("investments").get(function () {
-	return `${baseUrl}/${URL_PREFIX}/bases/${this.id}/investments/`;
+	return `${baseUrl}${URL_PREFIX}/bases/${this.id}/investments/`;
 });
 
 /**
