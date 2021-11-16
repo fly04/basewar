@@ -187,6 +187,10 @@ router.get("/", function (req, res, next) {
 	countQuery.count(function (err, total) {
 		if (err) {
 			return next(err);
+		} else if (total === 0) {
+			let error = new Error("No user found");
+			error.status = 404;
+			return next(error);
 		}
 
 		let query = queryUsers(req);
