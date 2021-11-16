@@ -57,8 +57,6 @@ exports.createWebSocketServer = function (httpServer) {
 					users.indexOf(userToDisconnect),
 					1
 				)[0];
-
-				updateUserMoney(disconnectedUser.id, disconnectedUser.money);
 			}
 		});
 	});
@@ -68,11 +66,32 @@ exports.createWebSocketServer = function (httpServer) {
 function handleUpdateLocation(ws, location, userId) {
 	let userExistsAlready = false;
 
+	if (location.type !== "Point") {
+		sendMessageToClient(ws, {
+			command: "error",
+			params: {
+				message: "Invalid location type",
+			},
+		});
+		return;
+	}
+
+	if (!validateGeoJsonCoordinates(location.coordinates)) {
+		sendMessageToClient(ws, {
+			command: "error",
+			params: {
+				message: "Invalid location coordinates",
+			},
+		});
+		return;
+	}
+
 	// Checks if the user is already in the users array
 	users.forEach((user) => {
 		if (user.client === ws) {
 			// If yes, update the user's location
 			userExistsAlready = true;
+
 			user.location = location;
 		}
 	});
@@ -242,6 +261,7 @@ function updateUsersMoney() {
 				command: "updateUser",
 				params: { money: user.money, income: income },
 			});
+			updateUserMoney(user.id, user.money);
 		});
 	});
 }
@@ -277,23 +297,27 @@ function sendMessageToClient(ws, messageData) {
 	ws.send(JSON.stringify(messageData));
 }
 
+// Validate a GeoJSON coordinates array (longitude, latitude and optional altitude).
+function validateGeoJsonCoordinates(value) {
+	return (
+		Array.isArray(value) &&
+		value.length >= 2 &&
+		value.length <= 3 &&
+		isLongitude(value[0]) &&
+		isLatitude(value[1])
+	);
+}
+
+function isLatitude(value) {
+	return value >= -90 && value <= 90;
+}
+
+function isLongitude(value) {
+	return value >= -180 && value <= 180;
+}
+
 // Run update functions every seconds
 setInterval(() => {
 	updateAllActiveBases();
 	updateUsersMoney();
-	//DEBUG
-	// users.forEach((user) => {
-	// 	console.log(user.id);
-	// });
-	// console.log("----------");
-	// activeBases.forEach((base) => {
-	// 	console.log(base.id + " --- income: " + base.income);
-	// 	base.activeUsers.forEach((user) => {
-	// 		console.log(user.id + " --- money: " + user.money);
-	// 	});
-	// });
-	// 	// 	// base.activeUsers.forEach((user) => {
-	// 	// 	// 	console.log(user.id == base.ownerId);
-	// 	// 	// });
-	// console.log("--------------");
 }, 1000);

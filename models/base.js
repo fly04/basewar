@@ -31,7 +31,7 @@ const baseSchema = new Schema({
 			// Validate that the userId is a valid ObjectId
 			// and references an existing user
 			validator: validateUser,
-			message: props => props.reason.message,
+			message: (props) => props.reason.message,
 		},
 	},
 	location: {
@@ -77,7 +77,7 @@ function validateUser(value) {
 		.model("User")
 		.findOne({ _id: ObjectId(value) })
 		.exec()
-		.then(user => {
+		.then((user) => {
 			if (!user) {
 				throw new Error("user not found");
 			}
@@ -96,7 +96,7 @@ function validateBaseNameUniqueness(value) {
 		.where("name")
 		.equals(value)
 		.exec()
-		.then(existingBase => {
+		.then((existingBase) => {
 			return !existingBase || existingBase._id.equals(this._id);
 		});
 }
@@ -104,7 +104,7 @@ function validateBaseNameUniqueness(value) {
 // Create a geospatial index on the location property.
 baseSchema.index({ location: "2dsphere" });
 
-// Validate a GeoJSON coordinates array (longitude, latitude and optional altitude). -- dupliqué dans model/user
+// Validate a GeoJSON coordinates array (longitude, latitude and optional altitude).
 function validateGeoJsonCoordinates(value) {
 	return (
 		Array.isArray(value) &&
