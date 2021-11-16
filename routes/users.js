@@ -8,7 +8,7 @@ const User = require("../models/user");
 const Base = require("../models/base");
 const Investment = require("../models/investment");
 const utils = require("./utils");
-// const { authenticate } = require("./auth");
+const { authenticate } = require("./auth");
 const config = require("../config");
 
 /********************************
@@ -36,7 +36,7 @@ const findUser = (req, res, next) => {
  * Save user in database
  */
 const saveUser = (req, res, next) => {
-	req.user.save((err) => {
+	req.user.save(err => {
 		if (err) return next(err);
 		next();
 	});
@@ -61,14 +61,14 @@ const removeUserBases = (req, res, next) => {
 		}
 
 		if (bases.length > 0) {
-			bases.forEach((base) => {
+			bases.forEach(base => {
 				Investment.find({ baseId: base.id }).exec((err, investments) => {
 					if (err) {
 						return next(err);
 					}
 
 					if (investments.length > 0) {
-						investments.forEach((investment) => {
+						investments.forEach(investment => {
 							investment.remove();
 						});
 					}
@@ -93,7 +93,7 @@ const removeUserInvestments = (req, res, next) => {
 		}
 
 		if (investment.length > 0) {
-			investment.forEach((investment) => {
+			investment.forEach(investment => {
 				investment.remove();
 			});
 		}
@@ -106,21 +106,33 @@ const removeUserInvestments = (req, res, next) => {
  * Remove user
  */
 const removeUser = (req, res, next) => {
-	req.user.remove((err) => {
-		if (err) return next(new Error(err));
-		next();
-	});
+	if (req.currentUserId !== req.user.id) {
+		let error = new Error("You can't delete this user");
+		error.status = 403;
+		return next(error);
+	} else {
+		req.user.remove(err => {
+			if (err) return next(new Error(err));
+			next();
+		});
+	}
 };
 
 /**
  * Update user
  */
 const updateUser = (req, res, next) => {
-	// Update properties in body
-	if (req.body.name !== undefined) {
-		req.user.name = req.body.name;
+	if (req.currentUserId !== req.user.id) {
+		let error = new Error("You can't edit this user");
+		error.status = 403;
+		return next(error);
+	} else {
+		// Update properties in body
+		if (req.body.name !== undefined) {
+			req.user.name = req.body.name;
+		}
+		next();
 	}
-	next();
 };
 
 /**
@@ -171,6 +183,7 @@ router.get("/:id", findUser, (req, res) => {
  */
 router.get("/", function (req, res, next) {
 	const countQuery = queryUsers(req);
+
 	countQuery.count(function (err, total) {
 		if (err) {
 			return next(err);
@@ -220,6 +233,7 @@ router.post(
  */
 router.delete(
 	"/:id",
+	authenticate,
 	findUser,
 	removeUserBases,
 	removeUserInvestments,
@@ -236,6 +250,7 @@ router.delete(
 router.patch(
 	"/:id",
 	utils.requireJson,
+	authenticate,
 	findUser,
 	updateUser,
 	saveUser,
