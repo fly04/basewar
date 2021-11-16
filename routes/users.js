@@ -170,12 +170,23 @@ function queryUsers(req) {
  * HTTP Methods
  ********************************/
 
+/**
+ * @api {get} /api/users/:id Get a user
+ * @apiName GetUser
+ * @apiGroup User
+ * @apiVersion 1.0.0
+ * @apiDescription Get a user
+ *
+ * @apiUse UserIdInUrlPath
+ * @apiUse UserInResponseBody
+ * @apiUse UserNotFoundError
+ */
 router.get("/:id", findUser, (req, res) => {
 	res.send(req.user);
 });
 
 /**
- * @api {get} /users Get all users
+ * @api {get} /api/users Get all users
  * @apiName GetUsers
  * @apiGroup Users
  * @apiVersion 1.0.0
@@ -247,7 +258,7 @@ router.get("/", function (req, res, next) {
 });
 
 /**
- * @api {post} /users Create a new user
+ * @api {post} /api/users Create a new user
  * @apiName CreateUser
  * @apiGroup Users
  * @apiVersion 1.0.0
@@ -269,6 +280,14 @@ router.get("/", function (req, res, next) {
  *    HTTP/1.1 201 Created
  *    Content-Type: application/json
  *    Location: http://basewar.herokuapp.com/api/users/6193f60b8bff41c7e8ee29f3
+ *
+ *    {
+ *        "name": "Bobby",
+ *        "money": 0,
+ *        "link": "http://basewar.herokuapp.com/api/users/6193f60b8bff41c7e8ee29f3",
+ *        "bases": "http://basewar.herokuapp.com/api/bases?ownerId=6193f60b8bff41c7e8ee29f3",
+ *        "id": "6193f60b8bff41c7e8ee29f3"
+ *    }
  */
 router.post(
 	"/",
@@ -373,4 +392,21 @@ module.exports = router;
 /**
  * @apiDefine UserValidationError
  * @apiError (Object)
+ */
+
+/**
+ * @apiDefine UserIdInUrlPath
+ * @apiParam (URL path parameters) {String} id The id of the user
+ */
+
+/**
+ * @apiDefine UserNotFoundError
+ * @apiError (Object) 404/NotFound No user corresponding to the given id was found
+ * @apiErrorExample {json} 404 Not Found
+ *    HTTP/1.1 404 Not Found
+ *    Content-Type: application/json
+ *
+ *    Error: User not found
+ *
+ *
  */
