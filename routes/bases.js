@@ -19,7 +19,7 @@ const router = express.Router();
  * Remove all investments from a base.
  * @param {Number} baseId
  */
-const removeBaseInvestments = baseId => {
+const removeBaseInvestments = (baseId) => {
 	Investment.deleteMany({ baseId: baseId });
 };
 
@@ -88,7 +88,7 @@ router.post("/", utils.requireJson, authenticate, function (req, res, next) {
 
 		let isFarEnough = true;
 
-		existingBases.forEach(base => {
+		existingBases.forEach((base) => {
 			let existingBase = {
 				lat: base.location.coordinates[0],
 				long: base.location.coordinates[1],
@@ -556,7 +556,7 @@ router.post(
 						}
 
 						// Checks if investor has enough money
-						if (investor.money <= 0) {
+						if (investor.money <= settings.initialInvestmentPrice) {
 							let error = new Error("Not enough money.");
 							error.status = 400;
 							return next(error);
