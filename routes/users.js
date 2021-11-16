@@ -5,6 +5,8 @@ const jwt = require("jsonwebtoken");
 const router = express.Router();
 
 const User = require("../models/user");
+const Base = require("../models/base");
+const Investment = require("../models/investment");
 const utils = require("./utils");
 // const { authenticate } = require("./auth");
 const config = require("../config");
@@ -50,9 +52,9 @@ const addUser = (req, res, next) => {
 };
 
 /**
- * Remove user
+ * Remove user's bases
  */
-const removeUser = (req, res, next) => {
+const removeUserBases = (req, res, next) => {
 	Base.find({ ownerId: req.user.id }).exec((err, bases) => {
 		if (err) {
 			return next(err);
@@ -60,7 +62,7 @@ const removeUser = (req, res, next) => {
 
 		if (bases.length > 0) {
 			bases.forEach((base) => {
-				Investments.find({ baseId: base.id }).exec((err, investments) => {
+				Investment.find({ baseId: base.id }).exec((err, investments) => {
 					if (err) {
 						return next(err);
 					}
@@ -72,12 +74,38 @@ const removeUser = (req, res, next) => {
 					}
 
 					base.remove();
+					next();
 				});
 			});
+		} else {
+			next();
 		}
 	});
+};
 
-	return;
+/**
+ * Remove user's investments
+ */
+const removeUserInvestments = (req, res, next) => {
+	Investment.find({ investorId: req.user.id }).exec((err, investment) => {
+		if (err) {
+			return next(err);
+		}
+
+		if (investment.length > 0) {
+			investment.forEach((investment) => {
+				investment.remove();
+			});
+		}
+
+		next();
+	});
+};
+
+/**
+ * Remove user
+ */
+const removeUser = (req, res, next) => {
 	req.user.remove((err) => {
 		if (err) return next(new Error(err));
 		next();
@@ -190,9 +218,17 @@ router.post(
 /**
  * DELETE new user
  */
-router.delete("/:id", findUser, removeUser, (req, res) => {
-	res.status(204).send(`User ${req.user.name} deleted`);
-});
+router.delete(
+	"/:id",
+	findUser,
+	removeUserBases,
+	removeUserInvestments,
+	removeUser,
+	(req, res) => {
+		console.log("coucou");
+		res.status(204).send();
+	}
+);
 
 /**
  * PATCH user

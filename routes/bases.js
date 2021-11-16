@@ -208,7 +208,7 @@ router.patch("/:id", utils.requireJson, (req, res, next) => {
 			base.name = req.body.name;
 		}
 
-		// Store investment
+		// Store base
 		base.save(function (err, savedBase) {
 			if (err) {
 				return next(err);
