@@ -142,81 +142,84 @@ router.patch("/:id", utils.requireJson, (req, res, next) => {
 
 /* POST new investement
  ********************************/
-router.post(
-	"/:id/investments",
-	utils.requireJson,
-	async function (req, res, next) {
-		const newInvestment = new Investment(req.body);
+router.post("/:id/investments", utils.requireJson, function (req, res, next) {
+	console.log(req.body);
+	const newInvestment = new Investment(req.body);
 
-		// Find investor
-		const investor = await User.findById(newInvestment.investorId).exec(err => {
-			if (err) return next(err);
-		});
+	console.log(newInvestment);
+
+	// Find investor
+	User.findById(newInvestment.investorId).exec((err, investor) => {
+		console.log(err);
+		if (err) return next(err);
 
 		// Find base
-		const currentBase = await Base.findById(req.params.id).exec(err => {
+		Base.findById(req.params.id).exec((err, currentBase) => {
 			if (err) return next(err);
+			console.log(investor);
+
+			// How many investments are in the current base
+			Investment.find({
+				baseId: currentBase.id,
+			}).exec((err, investmentsInCurrentBase) => {
+				if (err) return next(err);
+
+				// How many investments the investor has in the current investor
+				Investment.find({
+					baseId: currentBase.id,
+					investorId: investor.id,
+				}).exec((err, investorInvestmentsInCurrentBase) => {
+					if (err) return next(err);
+
+					// Check if the investor is not the owner of the base
+					if (currentBase.ownerId.equals(newInvestment.investorId)) {
+						let error = new Error("The owner of the base can't invest in it");
+						error.status = 400;
+						return next(error);
+					}
+
+					// Check if user already invested in base
+					if (investorInvestmentsInCurrentBase.length > 0) {
+						let error = new Error("This user already invested in this base.");
+						error.status = 400;
+						return next(error);
+					}
+
+					// Check if there is not too much investments already
+					if (investmentsInCurrentBase.length >= 5) {
+						let error = new Error(
+							"This base has already too much investments (max. 5)"
+						);
+						error.status = 400;
+						return next(error);
+					}
+
+					// Checks if investor has enough money
+					if (investor.money <= 0) {
+						let error = new Error("Not enough money.");
+						error.status = 400;
+						return next(error);
+					}
+
+					// Store investment
+					newInvestment.save(function (err, savedInvestment) {
+						if (err) {
+							return next(err);
+						}
+
+						return res
+							.status(201)
+							.set(
+								"Location",
+								`${config.baseUrl}/bases/${req.params.id}/investment/${savedInvestment._id}`
+							)
+							.send(savedInvestment);
+					});
+				});
+			});
 		});
-
-		// How many investments are in the current base
-		const investmentsInCurrentBase = await Investment.find({
-			baseId: currentBase.id,
-		}).exec(err => {
-			if (err) return next(err);
-		});
-
-		// How many investments the investor has in the current investor
-		const investorInvestmentsInCurrentBase = await Investment.find({
-			baseId: currentBase.id,
-			investorId: investor.id,
-		});
-
-		// Check if the investor is not the owner of the base
-		if (currentBase.ownerId.equals(newInvestment.investorId)) {
-			let error = new Error("The owner of the base can't invest in it");
-			error.status = 400;
-			return next(error);
-		}
-
-		// Check if user already invested in base
-		if (investorInvestmentsInCurrentBase.length > 0) {
-			let error = new Error("This user already invested in this base.");
-			error.status = 400;
-			return next(error);
-		}
-
-		// Check if there is not too much investments already
-		if (investmentsInCurrentBase.length >= 5) {
-			let error = new Error(
-				"This base has already too much investments (max. 5)"
-			);
-			error.status = 400;
-			return next(error);
-		}
-
-		// Checks if investor has enough money
-		if (investor.money <= 0) {
-			let error = new Error("Not enough money.");
-			error.status = 400;
-			return next(error);
-		}
-
-		// Store investment
-		newInvestment.save(function (err, savedInvestment) {
-			if (err) {
-				return next(err);
-			}
-
-			return res
-				.status(201)
-				.set(
-					"Location",
-					`${config.baseUrl}/bases/${req.params.id}/investment/${savedInvestment._id}`
-				)
-				.send(savedInvestment);
-		});
-	}
-);
+	});
+});
 
 /* GET all investment from a base */
 router.get("/:id/investments", function (req, res, next) {
