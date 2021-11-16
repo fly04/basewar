@@ -256,12 +256,24 @@ function updateUsersMoney() {
 		}
 
 		base.activeUsers.forEach((user) => {
-			user.money += income;
-			sendMessageToUser(user.id, {
-				command: "updateUser",
-				params: { money: user.money, income: income },
+			User.findOne({ _id: user.id }, (err, storedUser) => {
+				if (err) {
+					sendMessageToUser(user.id, {
+						command: "error",
+						params: {
+							message: err.message,
+						},
+					});
+					return;
+				}
+				user.money = storedUser.money;
+				user.money += income;
+				sendMessageToUser(user.id, {
+					command: "updateUser",
+					params: { money: user.money, income: income },
+				});
+				updateUserMoney(user.id, user.money);
 			});
-			updateUserMoney(user.id, user.money);
 		});
 	});
 }
@@ -282,6 +294,9 @@ function updateUserMoney(userId, newAmount) {
 		user.save();
 	});
 }
+
+// Get users money from DeleteBase
+function getUserMoney(userId) {}
 
 // Send a message to a user
 function sendMessageToUser(userId, messageData) {
