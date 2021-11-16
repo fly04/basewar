@@ -37,6 +37,7 @@ exports.getPaginationParameters = function (req) {
 exports.addLinkHeader = function (resourceHref, page, pageSize, total, res) {
 	const links = {};
 	const url = baseUrl + resourceHref;
+	console.log(url);
 	const maxPage = Math.ceil(total / pageSize);
 
 	// Add first & prev links if current page is not the first one
@@ -63,7 +64,6 @@ exports.addLinkHeader = function (resourceHref, page, pageSize, total, res) {
 	// If there are any links (i.e. if there is more than one page),
 	// add the Link header to the response
 	if (Object.keys(links).length > 1) {
-		console.log(links);
 		res.set("Link", formatLinkHeader(links));
 	}
 };

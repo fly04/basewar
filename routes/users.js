@@ -1,9 +1,7 @@
 const bcrypt = require("bcrypt");
 const express = require("express");
 const jwt = require("jsonwebtoken");
-
 const router = express.Router();
-
 const User = require("../models/user");
 const Base = require("../models/base");
 const Investment = require("../models/investment");
@@ -16,7 +14,7 @@ const config = require("../config");
  ********************************/
 
 /**
- * Find user by id
+ * Get a user
  */
 const findUser = (req, res, next) => {
 	User.findById(req.params.id).exec((err, user) => {
@@ -36,7 +34,7 @@ const findUser = (req, res, next) => {
  * Save user in database
  */
 const saveUser = (req, res, next) => {
-	req.user.save(err => {
+	req.user.save((err) => {
 		if (err) return next(err);
 		next();
 	});
@@ -61,14 +59,14 @@ const removeUserBases = (req, res, next) => {
 		}
 
 		if (bases.length > 0) {
-			bases.forEach(base => {
+			bases.forEach((base) => {
 				Investment.find({ baseId: base.id }).exec((err, investments) => {
 					if (err) {
 						return next(err);
 					}
 
 					if (investments.length > 0) {
-						investments.forEach(investment => {
+						investments.forEach((investment) => {
 							investment.remove();
 						});
 					}
@@ -93,7 +91,7 @@ const removeUserInvestments = (req, res, next) => {
 		}
 
 		if (investment.length > 0) {
-			investment.forEach(investment => {
+			investment.forEach((investment) => {
 				investment.remove();
 			});
 		}
@@ -111,7 +109,7 @@ const removeUser = (req, res, next) => {
 		error.status = 403;
 		return next(error);
 	} else {
-		req.user.remove(err => {
+		req.user.remove((err) => {
 			if (err) return next(new Error(err));
 			next();
 		});
@@ -167,19 +165,52 @@ function queryUsers(req) {
 
 	return query;
 }
+
 /********************************
  * HTTP Methods
  ********************************/
 
-/**
- * GET user
- */
 router.get("/:id", findUser, (req, res) => {
 	res.send(req.user);
 });
 
 /**
- * GET users
+ * @api {get} /users Get all users
+ * @apiName GetUsers
+ * @apiGroup Users
+ * @apiVersion 1.0.0
+ * @apiDescription Get a pagniated list of all users
+ *
+ * @apiUse UserInResponseBody
+ *
+ * @apiParam (URL query parameters) {Number{1..}} [page] The page to retrieve (defaults to 1)
+ * @apiParam (URL query parameters) {Number{1..100}} [pageSize] The number of elements to retrieve in one page (defaults to 100)
+ * @apiSuccess (Response headers) {String} Link Links to the first, previous, next and last pages of the collection (if applicable)
+ *
+ * @apiExample Example:
+ *      GET /api/users?page=1&pageSize=2 HTTP/1.1
+ *
+ * @apiSuccesExample 200 OK
+ *     HTTP/1.1 200 OK
+ *     Content-Type: application/json
+ *     Link &lt;http://basewar.herokuapp.com/api/users?page=2&pageSize=2&gt;; rel="next", &lt;http://basewar.herokuapp.com/api/users?page=3&pageSize=2>&gt;; rel="last"
+ *
+ *      [
+ *          {
+ *              "name": "Bobby",
+ *              "money": 420,
+ *              "link": "http://basewar.herokuapp.com/api/users/6193e2a4e4e1e5ad13d568bb",
+ *              "bases": "http://basewar.herokuapp.com/api/bases?ownerId=6193e2a4e4e1e5ad13d568bb",
+ *              "id": "6193e2a4e4e1e5ad13d568bb"
+ *          },
+ *          {
+ *              "name": "Kévin",
+ *              "money": 1337,
+ *              "link": "http://basewar.herokuapp.com/api/users/6193ee5da4560940f6904b57",
+ *              "bases": "http://basewar.herokuapp.com/api/bases?ownerId=6193ee5da4560940f6904b57",
+ *              "id": "6193ee5da4560940f6904b57"
+ *          }
+ *      ]
  */
 router.get("/", function (req, res, next) {
 	const countQuery = queryUsers(req);
@@ -199,7 +230,7 @@ router.get("/", function (req, res, next) {
 		query = query.skip((page - 1) * pageSize).limit(pageSize);
 
 		// Add the Link header to the response
-		utils.addLinkHeader("/api/users", page, pageSize, total, res);
+		utils.addLinkHeader("/users", page, pageSize, total, res);
 
 		// ===Query execution===
 		query.exec(function (err, users) {
@@ -212,7 +243,28 @@ router.get("/", function (req, res, next) {
 });
 
 /**
- * POST new user
+ * @api {post} /users Create a new user
+ * @apiName CreateUser
+ * @apiGroup Users
+ * @apiVersion 1.0.0
+ * @apiDescription Create a new user
+ *
+ * @apiUse UserInRequestBody
+ * @apiUse UserInResponseBody
+ *
+ * @apiExample Example
+ *    POST /api/users HTTP/1.1
+ *    Content-Type: application/json
+ *
+ *    {
+ *       "name": "Bobby",
+ *       "password": "mYpAsSwOrD"
+ *    }
+ *
+ * @apiSuccessExample 201 Created
+ *    HTTP/1.1 201 Created
+ *    Content-Type: application/json
+ *    Location: http://basewar.herokuapp.com/api/users/6193f60b8bff41c7e8ee29f3
  */
 router.post(
 	"/",
@@ -298,3 +350,23 @@ router.post("/login", function (req, res, next) {
 });
 
 module.exports = router;
+
+/**
+ * @apiDefine UserInResponseBody
+ * @apiSuccess (Response body) {String} name The name of the user
+ * @apiSuccess (Response body) {String} money The money of the user
+ * @apiSuccess (Response body) {String} link A link to the user document
+ * @apiSuccess (Response body) {String} bases A link to the user's bases
+ * @apiSuccess (Response body) {String} id The id of the user
+ */
+
+/**
+ * @apiDefine UserInRequestBody
+ * @apiParam (Request body) {String{3..30}} name The name of the user
+ * @apiParam (Request body) {String} password The password of the user
+ */
+
+/**
+ * @apiDefine UserValidationError
+ * @apiError (Object)
+ */
