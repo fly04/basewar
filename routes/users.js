@@ -213,6 +213,13 @@ router.get("/:id", findUser, (req, res) => {
  * @apiParam (URL query parameters) {Number{1..100}} [pageSize] The number of elements to retrieve in one page (defaults to 100)
  * @apiSuccess (Response headers) {String} Link Links to the first, previous, next and last pages of the collection (if applicable)
  *
+ * @apiError (Object) 404/NotFound No users were found
+ * @apiErrorExample {json} 404 Not Found
+ *    HTTP/1.1 404 Not Found
+ *    Content-Type: application/json
+ *
+ *    Error: No users were found.
+ *
  * @apiExample Example:
  *      GET /api/users?page=1&pageSize=2 HTTP/1.1
  *
@@ -245,7 +252,7 @@ router.get("/", function (req, res, next) {
 		if (err) {
 			return next(err);
 		} else if (total === 0) {
-			let error = new Error("No user found");
+			let error = new Error("No users were found.");
 			error.status = 404;
 			return next(error);
 		}
@@ -325,8 +332,8 @@ router.post(
  * @apiVersion 1.0.0
  * @apiDescription Delete a user
  *
- * @apiUse PersonIdInUrlPath
- * @apiUse PersonNotFoundError
+ * @apiUse UserIdInUrlPath
+ * @apiUse UserNotFoundError
  *
  * @apiExample Example
  *  DELETE /api/users/6193f60b8bff41c7e8ee29f3 HTTP/1.1
@@ -349,6 +356,35 @@ router.delete(
 
 /**
  * @api {patch} /api/users/:id Update a user
+ * @apiName UpdateUser
+ * @apiGroup Users
+ * @apiVersion 1.0.0
+ * @apiDescription Replace the user data (only the name can be modified)
+ *
+ * @apiUse UserIdInUrlPath
+ * @apiParam (Request body) {String{3..30}} name The new name of the user
+ * @apiUse UserInResponseBody
+ * @apiUse UserNotFoundError
+ *
+ * @apiExample Example
+ *  PATCH /api/users/6193f60b8bff41c7e8ee29f3 HTTP/1.1
+ *
+ *      {
+ *          "name": "Bob"
+ *      }
+ *
+ * @apiSuccessExample 200 OK
+ *  HTTP/1.1 200 OK
+ *  Content-Type: application/json
+ *
+ *      {
+ *        "name": "Bob",
+ *        "money": 0,
+ *        "link": "http://basewar.herokuapp.com/api/users/6193f60b8bff41c7e8ee29f3",
+ *        "bases": "http://basewar.herokuapp.com/api/bases?ownerId=6193f60b8bff41c7e8ee29f3",
+ *        "id": "6193f60b8bff41c7e8ee29f3"
+ *      }
+ *
  */
 router.patch(
 	"/:id",
@@ -359,14 +395,53 @@ router.patch(
 	saveUser,
 	(req, res) => {
 		res
-			.status(201)
+			.status(200)
 			.set("Location", `${config.baseUrl}/users/${req.user.id}`)
 			.send(req.user);
 	}
 );
 
-/* Login route
- ********************************/
+/**
+ * @api {post} /api/users/login Login a user
+ * @apiName LoginUser
+ * @apiGroup Users
+ * @apiVersion 1.0.0
+ * @apiDescription Log a user in
+ *
+ * @apiUse UserInRequestBody
+ * @apiSuccess (Response body) {String} token The JWT token
+ *
+ * @apiError (Object) 404/NotFound No user found with the corresponding name
+ * @apiErrorExample {json} 404 Not Found
+ *      HTTP/1.1 404 Not Found
+ *      Content-Type: application/json
+ *
+ *      Error: User not found
+ *
+ * @apiError (Object) 401/Unauthorized Wrong password
+ * @apiErrorExample {json} 401 Unauthorized
+ *      HTTP/1.1 401 Unauthorized
+ *      Content-Type: application/json
+ *
+ *      Unauthorized
+ *
+ * @apiExample Example
+ * POST /api/users/login HTTP/1.1
+ * Content-Type: application/json
+ *
+ *    {
+ *      "name": "Bob",
+ *      "password": "mYpAsSwOrD"
+ *    }
+ *
+ * @apiSuccessExample 200 OK
+ *  HTTP/1.1 200 OK
+ *  Content-Type: application/json
+ *
+ *   {
+ *   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MTkzZWU2MWE0NTYwOTQwZjY5MDRiNWQiLCJleHAiOjE2Mzc2OTQ2MzQsImlhdCI6MTYzNzA4OTgzNH0.ZfsqA-T6R0Y2AhcWC5dfW3jW89DjytjuPP9bE4oxyUg"
+ *   }
+ */
 router.post("/login", function (req, res, next) {
 	const secretKey = config.secretKey;
 
@@ -375,7 +450,9 @@ router.post("/login", function (req, res, next) {
 		if (err) {
 			return next(err);
 		} else if (!user) {
-			return res.sendStatus(401);
+			let error = new Error("User not found");
+			error.status = 404;
+			return next(error);
 		}
 
 		// Verify that the user correspond to the stored password
@@ -415,11 +492,6 @@ module.exports = router;
  * @apiDefine UserInRequestBody
  * @apiParam (Request body) {String{3..30}} name The name of the user
  * @apiParam (Request body) {String} password The password of the user
- */
-
-/**
- * @apiDefine UserValidationError
- * @apiError (Object)
  */
 
 /**
