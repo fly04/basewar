@@ -117,24 +117,27 @@ router.delete("/:id", function (req, res, next) {
 });
 
 /**
- * PUT base
+ * PATCH base
  */
-router.put("/:id", utils.requireJson, (req, res, next) => {
-	Base.findByIdAndUpdate(
-		req.params.id,
-		req.body,
-		{ new: true },
-		(err, base) => {
+router.patch("/:id", utils.requireJson, (req, res, next) => {
+	Base.findOne({ _id: req.params.id }).exec((err, base) => {
+		if (err) return next(err);
+
+		if (req.body.name !== undefined) {
+			base.name = req.body.name;
+		}
+
+		base.save(function (err, savedBase) {
 			if (err) {
-				return next(new Error(err));
+				return next(err);
 			}
-			req.base = req.body;
+
 			res
 				.status(201)
-				.set("Location", `${config.baseUrl}/bases/${req.base.id}`)
-				.send(req.base);
-		}
-	);
+				.set("Location", `${config.baseUrl}/bases/${savedBase._id}`)
+				.send(savedBase);
+		});
+	});
 });
 
 /* POST new investement
@@ -145,10 +148,10 @@ router.post(
 	async function (req, res, next) {
 		const newInvestment = new Investment(req.body);
 
-		//Checks if base exists
+		// Checks if base exists
 		await utils.validateBase(req.params.id);
 
-		//Checks if investor exists
+		// Checks if investor exists
 		await utils.validateUser(newInvestment.investorId);
 
 		const investor = await User.findById(newInvestment.investorId);

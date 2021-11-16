@@ -18,9 +18,7 @@ const config = require("../config");
  */
 const findUser = (req, res, next) => {
 	User.findById(req.params.id).exec((err, user) => {
-		if (err) {
-			return next(new Error(err));
-		}
+		if (err) return next(err);
 		req.user = user;
 		next();
 	});
@@ -30,10 +28,8 @@ const findUser = (req, res, next) => {
  * Save user in database
  */
 const saveUser = (req, res, next) => {
-	req.user.save((err) => {
-		if (err) {
-			return next(new Error(err));
-		}
+	req.user.save(err => {
+		if (err) return next(err);
 		next();
 	});
 };
@@ -51,7 +47,7 @@ const addUser = (req, res, next) => {
  * Remove user
  */
 const removeUser = (req, res, next) => {
-	req.user.remove((err) => {
+	req.user.remove(err => {
 		if (err) return next(new Error(err));
 		next();
 	});
@@ -61,12 +57,11 @@ const removeUser = (req, res, next) => {
  * Update user
  */
 const updateUser = (req, res, next) => {
-	// TODO: Remettre l'argent tel qu'il était au début
-	User.findByIdAndUpdate(req.params.id, req.body, { new: true }, (err) => {
-		if (err) return next(new Error(err));
-		req.user = req.body; // semble inutile?
-		next();
-	});
+	// Update properties in body
+	if (req.body.name !== undefined) {
+		req.user.name = req.body.name;
+	}
+	next();
 };
 
 /**
@@ -169,13 +164,14 @@ router.delete("/:id", findUser, removeUser, (req, res) => {
 });
 
 /**
- * PUT user
+ * PATCH user
  */
-router.put(
+router.patch(
 	"/:id",
 	utils.requireJson,
-	hashPassword,
+	findUser,
 	updateUser,
+	saveUser,
 	(req, res) => {
 		res
 			.status(201)
