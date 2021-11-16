@@ -83,54 +83,6 @@ exports.requireJson = function (req, res, next) {
 	next(error);
 };
 
-/**
- * Given a user ID, ensures that it references an existing user.
- *
- * If it's not the case or the ID is missing or not a valid object ID,
- * the "userId" property is invalidated.
- */
-exports.validateBase = function (value) {
-	if (!ObjectId.isValid(value)) {
-		throw new Error("Base not found");
-	}
-
-	return mongoose
-		.model("Base")
-		.findOne({ _id: ObjectId(value) })
-		.exec()
-		.then((base) => {
-			if (!base) {
-				throw new Error("Base not found");
-			}
-
-			return true;
-		});
-};
-
-/**
- * Given a user ID, ensures that it references an existing user.
- *
- * If it's not the case or the ID is missing or not a valid object ID,
- * the "userId" property is invalidated.
- */
-exports.validateUser = function (value) {
-	if (!ObjectId.isValid(value)) {
-		throw new Error("User not found");
-	}
-
-	return mongoose
-		.model("User")
-		.findOne({ _id: ObjectId(value) })
-		.exec()
-		.then((base) => {
-			if (!base) {
-				throw new Error("User not found");
-			}
-
-			return true;
-		});
-};
-
 // Calculate distance between two points
 exports.distanceBetweenTwoPoints = function (lat1, lon1, lat2, lon2) {
 	const R = 6371; // Radius of the earth in km

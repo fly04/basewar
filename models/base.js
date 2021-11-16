@@ -128,7 +128,6 @@ function isLongitude(value) {
  * and includes the owner's data if it has been populated.
  */
 function transformJsonBase(doc, json, options) {
-	console.log(doc.ownerId + "lolololol");
 	json.owner = doc.ownerId.toJSON();
 	delete json.ownerId;
 	delete json._id;
