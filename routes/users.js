@@ -180,6 +180,21 @@ function queryUsers(req) {
  * @apiUse UserIdInUrlPath
  * @apiUse UserInResponseBody
  * @apiUse UserNotFoundError
+ *
+ * @apiExample Example
+ * GET /api/users/6193f60b8bff41c7e8ee29f3 HTTP/1.1
+ *
+ * @apiSuccessExample 200 OK
+ * HTTP/1.1 200 OK
+ * Content-Type: application/json
+ *
+ *   {
+ *        "name": "Bobby",
+ *        "money": 0,
+ *        "link": "http://basewar.herokuapp.com/api/users/6193f60b8bff41c7e8ee29f3",
+ *        "bases": "http://basewar.herokuapp.com/api/bases?ownerId=6193f60b8bff41c7e8ee29f3",
+ *        "id": "6193f60b8bff41c7e8ee29f3"
+ *    }
  */
 router.get("/:id", findUser, (req, res) => {
 	res.send(req.user);
@@ -304,7 +319,20 @@ router.post(
 );
 
 /**
- * DELETE new user
+ * @api {delete} /api/users/:id Delete a user
+ * @apiName DeleteUser
+ * @apiGroup Users
+ * @apiVersion 1.0.0
+ * @apiDescription Delete a user
+ *
+ * @apiUse PersonIdInUrlPath
+ * @apiUse PersonNotFoundError
+ *
+ * @apiExample Example
+ *  DELETE /api/users/6193f60b8bff41c7e8ee29f3 HTTP/1.1
+ *
+ * @apiSuccessExample 204 No Content
+ *  HTTP/1.1 204 No Content
  */
 router.delete(
 	"/:id",
@@ -320,7 +348,7 @@ router.delete(
 );
 
 /**
- * PATCH user
+ * @api {patch} /api/users/:id Update a user
  */
 router.patch(
 	"/:id",
@@ -407,6 +435,4 @@ module.exports = router;
  *    Content-Type: application/json
  *
  *    Error: User not found
- *
- *
  */
