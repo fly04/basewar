@@ -176,10 +176,10 @@ router.put(
 	utils.requireJson,
 	hashPassword,
 	updateUser,
-	(req, res, next) => {
+	(req, res) => {
 		res
 			.status(201)
-			.set("Location", `${config.baseUrl}/users/${req.user._id}`)
+			.set("Location", `${config.baseUrl}/users/${req.user.id}`)
 			.send(req.user);
 	}
 );
