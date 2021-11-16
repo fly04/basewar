@@ -225,20 +225,30 @@ router.patch("/:id", utils.requireJson, (req, res, next) => {
 /* POST new investement
  ********************************/
 router.post("/:id/investments", utils.requireJson, function (req, res, next) {
-	console.log(req.body);
-	const newInvestment = new Investment(req.body);
+	req.body.baseId = mongoose.Types.ObjectId(req.body.baseId);
+	req.body.investorId = mongoose.Types.ObjectId(req.body.investorId);
 
-	console.log(newInvestment);
+	const newInvestment = new Investment(req.body);
 
 	// Find investor
 	User.findById(newInvestment.investorId).exec((err, investor) => {
-		console.log(err);
-		if (err) return next(err);
+		if (err) {
+			return next(err);
+		} else if (!investor) {
+			let error = new Error("Investor not found");
+			error.status = 404;
+			return next(error);
+		}
 
 		// Find base
 		Base.findById(req.params.id).exec((err, currentBase) => {
-			if (err) return next(err);
-			console.log(investor);
+			if (err) {
+				return next(err);
+			} else if (!currentBase) {
+				let error = new Error("Investor not found");
+				error.status = 404;
+				return next(error);
+			}
 
 			// How many investments are in the current base
 			Investment.find({
@@ -249,7 +259,7 @@ router.post("/:id/investments", utils.requireJson, function (req, res, next) {
 				// How many investments the investor has in the current investor
 				Investment.find({
 					baseId: currentBase.id,
-					investorId: investor.id,
+					investorId: req.body.investorId,
 				}).exec((err, investorInvestmentsInCurrentBase) => {
 					if (err) return next(err);
 
