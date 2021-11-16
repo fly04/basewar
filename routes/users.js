@@ -349,7 +349,6 @@ router.delete(
 	removeUserInvestments,
 	removeUser,
 	(req, res) => {
-		console.log("coucou");
 		res.status(204).send();
 	}
 );

@@ -37,7 +37,6 @@ exports.getPaginationParameters = function (req) {
 exports.addLinkHeader = function (resourceHref, page, pageSize, total, res) {
 	const links = {};
 	const url = baseUrl + resourceHref;
-	console.log(url);
 	const maxPage = Math.ceil(total / pageSize);
 
 	// Add first & prev links if current page is not the first one
