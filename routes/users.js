@@ -173,7 +173,7 @@ function queryUsers(req) {
 /**
  * @api {get} /api/users/:id Get a user
  * @apiName GetUser
- * @apiGroup User
+ * @apiGroup Users
  * @apiVersion 1.0.0
  * @apiDescription Get a user
  *

@@ -12,10 +12,8 @@ var basesRouter = require("./routes/bases");
 
 var app = express();
 
-//hello world
-app.use("/hello", function hello(req, res, next) {
-	res.send("world");
-});
+// APIdoc
+app.use("/apidoc", express.static(path.join(__dirname, "docs")));
 
 //connection to DB
 const mongoose = require("mongoose");

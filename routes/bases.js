@@ -38,7 +38,8 @@ const removeBaseInvestments = baseId => {
  * @apiUse BaseInRequestBody
  * @apiUse BaseInResponseBody
  *
- * @apiParamExample Example
+ *
+ * @apiExample {Object} Example
  * POST /api/bases HTTP/1.1
  * Content-Type: application/json
  *
@@ -173,7 +174,8 @@ router.post("/", utils.requireJson, authenticate, function (req, res, next) {
  *
  * @apiParam (URL query parameters) {String} [ownerId] The user id of the owner of the base.
  *
- * @apiParamExample GET /api/bases?ownerId=5a9f9d8e8f8b8a0e8c8b4567 HTTP/1.1
+ * @apiExample
+ * GET /api/bases?ownerId=5a9f9d8e8f8b8a0e8c8b4567 HTTP/1.1
  *
  *
  * @apiSuccessExample 200 OK
@@ -241,7 +243,7 @@ router.get("/", function (req, res, next) {
 /**
  * @api {get} /api/bases/:id Get a base
  * @apiName GetBase
- * @apiGroup Base
+ * @apiGroup Bases
  * @apiVersion 1.0.0
  * @apiDescription Get a base
  *
@@ -336,7 +338,7 @@ router.delete("/:id", authenticate, function (req, res, next) {
  *
  * @api {patch} /api/base/:baseId/investment/:id Update an investment
  * @apiName UpdateInvestment
- * @apiGroup Investment
+ * @apiGroup Investments
  * @apiVersion  1.0.0
  * @apiDescription Update an investment
  *
@@ -405,7 +407,7 @@ router.patch("/:id", utils.requireJson, authenticate, (req, res, next) => {
 /**
  * @api {post} /api/bases/:id/investments Create a new investment
  * @apiName CreateInvestment
- * @apiGroup Investment
+ * @apiGroup Investments
  * @apiVersion  1.0.0
  * @apiDescription Create a new investment
  *
@@ -415,42 +417,43 @@ router.patch("/:id", utils.requireJson, authenticate, (req, res, next) => {
  * @apiUse BaseIdInUrlPath
  * @apiUse BaseNotFoundError
  *
- * @apiError (Object) 403 Forbidden The user id does not match with the investor id
+ *
+ * @apiError 403/Forbidden The user id does not match with the investor id
  * @apiErrorExample 403 Forbidden
  * HTTP/1.1 403 Forbidden
  * Content-Type: application/json
  *
  * You can't invest for other users
  *
- * @apiError (Object) 404 Not Found The base id does not match with the base id in the url
+ * @apiError 404/NotFound The base id does not match with the base id in the url
  * @apiErrorExample 404 Not Found
  * HTTP/1.1 404 Not Found
  * Content-Type: application/json
  *
  * Base not found
  *
- * @apiError (Object) 400 Bad Request The owner of the base is the same as the investor
+ * @apiError 400/BadRequest The owner of the base is the same as the investor
  * @apiErrorExample 400 Bad Request
  * HTTP/1.1 400 Bad Request
  * Content-Type: application/json
  *
  * The owner of the base can't invest in it
  *
- * @apiError (Object) 400 Bad Request The number of investments of the investor for the current base is greater than 0
+ * @apiError 400/BadRequest The number of investments of the investor for the current base is greater than 0
  * @apiErrorExample 400 Bad Request
  * HTTP/1.1 400 Bad Request
  * Content-Type: application/json
  *
  * This user already invested in this base.
  *
- * @apiError (Object) 400 Bad Request The number of investments of the base is greater than 5
+ * @apiError 400/BadRequest The number of investments of the base is greater than 5
  * @apiErrorExample 400 Bad Request
  * HTTP/1.1 400 Bad Request
  * Content-Type: application/json
  *
  * This base has already too much investments (max. 5)
  *
- * @apiError (Object) 400 Bad Request The money of the investor is equal or less than 0
+ * @apiError 400/BadRequest The money of the investor is equal or less than 0
  * @apiErrorExample 400 Bad Request
  * HTTP/1.1 400 Bad Request
  * Content-Type: application/json
@@ -586,7 +589,7 @@ router.post(
 
 /**
  *
- * @api {get} /api/bases/:id/investments Get all investments of a base
+ * @api {get} /api/bases/:id/investments Get all investments
  * @apiName GetInvestments
  * @apiGroup Investments
  * @apiVersion  1.0.0
@@ -774,11 +777,16 @@ module.exports = router;
  */
 
 /**
- * @apiDefine BaseValidationError
- * @apiError (Object)
+ * @apiDefine BaseIdInUrlPath
+ * @apiParam (URL path parameters) {String} id The id of the base
  */
 
 /**
- * @apiDefine BaseIdInUrlPath
- * @apiParam (URL path parameters) {String} id The id of the base
+ * @apiDefine BaseNotFoundError
+ * @apiError (Object) 404/NotFound No base corresponding to the given id was found
+ * @apiErrorExample {json} 404 Not Found
+ *    HTTP/1.1 404 Not Found
+ *    Content-Type: application/json
+ *
+ *    Error: Base not found
  */
