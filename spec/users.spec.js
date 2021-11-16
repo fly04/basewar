@@ -89,16 +89,17 @@ describe("DELETE /users", function () {
 	});
 
 	it("should delete a user", async function () {
+		const token = await generateValidJwt(user);
 		const res = await supertest(app)
 			.delete(`/api/users/${user.id}`)
-			// .set("Authorization", `Bearer ${token}`)
+			.set("Authorization", `Bearer ${token}`)
 			.expect(204); // No content
 	});
 });
 
 /* PATCH users
  ********************************/
-describe("PUT /users", function () {
+describe("PATCH /users", function () {
 	// Create 1 user
 	let user;
 	beforeEach(async function () {
@@ -113,10 +114,11 @@ describe("PUT /users", function () {
 	});
 
 	it("should modify the name of a user", async function () {
+		const token = await generateValidJwt(user);
 		const res = await supertest(app)
-			.put(`/api/users/${user.id}`)
-			.send({ name: "Bobby", password: user.password })
-			// .set("Authorization", `Bearer ${token}`)
+			.patch(`/api/users/${user.id}`)
+			.send({ name: "Bobby" })
+			.set("Authorization", `Bearer ${token}`)
 			.expect(201); // Created
 		expect(res.body.name).to.equal("Bobby");
 	});
