@@ -319,14 +319,15 @@ router.get("/:id", function (req, res, next) {
  *  HTTP/1.1 204 No Content
  */
 router.delete("/:id", authenticate, function (req, res, next) {
-	// Authorizations
-	if (req.currentUserId !== req.params.id) {
-		let error = new Error("You can't delete other user bases");
-		error.status = 403;
-		return next(error);
-	}
-
 	Base.findById(req.params.id).exec(function (err, base) {
+		// Authorizations
+		if (req.currentUserId !== base.ownerId.toString()) {
+
+			let error = new Error("You can't delete other user bases");
+			error.status = 403;
+			return next(error);
+		}
+
 		if (err) {
 			return next(err);
 		} else if (!base) {
@@ -378,14 +379,14 @@ router.delete("/:id", authenticate, function (req, res, next) {
  *
  */
 router.patch("/:id", utils.requireJson, authenticate, (req, res, next) => {
-	// Authorizations
-	if (req.currentUserId !== req.params.id) {
-		let error = new Error("You can't edit other user bases");
-		error.status = 403;
-		return next(error);
-	}
-
 	Base.findOne({ _id: req.params.id }).exec((err, base) => {
+		// Authorizations
+		if (req.currentUserId !== base.ownderId.toString()) {
+			let error = new Error("You can't edit other user bases");
+			error.status = 403;
+			return next(error);
+		}
+
 		if (err) {
 			return next(err);
 		} else if (!base) {
