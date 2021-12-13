@@ -684,7 +684,16 @@ router.get("/:id/investments", function (req, res, next) {
  * }
  */
 router.get("/:baseId/investments/:id", function (req, res, next) {
-	let query = Investment.findById(req.params.id);
+	const investmentId = req.params.id;
+
+	if (!ObjectId.isValid(investmentId)) {
+		return res
+			.status(404)
+			.type("text")
+			.send(`No investment found with ID ${investmentId}`);
+	}
+
+	let query = Investment.findById(investmentId);
 
 	query.populate("investorId");
 	query.exec(function (err, investment) {
