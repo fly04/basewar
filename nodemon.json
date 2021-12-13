@@ -3,6 +3,7 @@
       "app.js",
       "bin/www",
       "routes/**/*.js",
-      "ws.js"
+      "ws.js",
+      "docs/**/*"
     ]
   }

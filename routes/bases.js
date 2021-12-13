@@ -162,6 +162,7 @@ router.post("/", utils.requireJson, authenticate, function (req, res, next) {
 	});
 });
 
+
 /**
  *
  * @api {get} /api/bases Get all bases
@@ -174,6 +175,8 @@ router.post("/", utils.requireJson, authenticate, function (req, res, next) {
  *
  * @apiParam (URL query parameters) {String} [ownerId] The user id of the owner of the base.
  *
+ * @apiSuccess (200) {type} name description
+ * 
  * @apiExample
  * GET /api/bases?ownerId=5a9f9d8e8f8b8a0e8c8b4567 HTTP/1.1
  *

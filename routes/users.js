@@ -216,7 +216,7 @@ router.get("/:id", findUser, (req, res) => {
  * @apiExample Example:
  *      GET /api/users?page=1&pageSize=2 HTTP/1.1
  *
- * @apiSuccesExample 200 OK
+ * @apiSuccessExample 200 OK
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
  *     Link &lt;http://basewar.herokuapp.com/api/users?page=2&pageSize=2&gt;; rel="next", &lt;http://basewar.herokuapp.com/api/users?page=3&pageSize=2>&gt;; rel="last"
