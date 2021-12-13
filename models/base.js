@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const ObjectId = mongoose.Types.ObjectId;
-const { baseUrl, URL_PREFIX } = require("../config");
+const { baseUrl } = require("../config");
 
 // Define the schema for bases
 const baseSchema = new Schema({
@@ -59,7 +59,7 @@ baseSchema.set("toJSON", {
 });
 
 baseSchema.virtual("investments").get(function () {
-	return `${baseUrl}${URL_PREFIX}/bases/${this.id}/investments/`;
+	return `${baseUrl}/bases/${this.id}/investments/`;
 });
 
 /**

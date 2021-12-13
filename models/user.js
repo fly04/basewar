@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-const { baseUrl, URL_PREFIX } = require("../config");
+const { baseUrl } = require("../config");
 
 // Define the schema for users
 const userSchema = new Schema({
@@ -29,12 +29,12 @@ userSchema.set("toJSON", {
 
 // Create a virtual property `link` which lead to this user data
 userSchema.virtual("link").get(function () {
-	return `${baseUrl}${URL_PREFIX}/users/${this.id}`;
+	return `${baseUrl}/users/${this.id}`;
 });
 
 // Create a virtual property `bases` which lead to this user data
 userSchema.virtual("bases").get(function () {
-	return `${baseUrl}${URL_PREFIX}/bases?ownerId=${this.id}`;
+	return `${baseUrl}/bases?ownerId=${this.id}`;
 });
 
 function transformJsonUser(doc, json, options) {

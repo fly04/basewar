@@ -34,7 +34,7 @@ const findUser = (req, res, next) => {
  * Save user in database
  */
 const saveUser = (req, res, next) => {
-	req.user.save((err) => {
+	req.user.save(err => {
 		if (err) return next(err);
 		next();
 	});
@@ -59,14 +59,14 @@ const removeUserBases = (req, res, next) => {
 		}
 
 		if (bases.length > 0) {
-			bases.forEach((base) => {
+			bases.forEach(base => {
 				Investment.find({ baseId: base.id }).exec((err, investments) => {
 					if (err) {
 						return next(err);
 					}
 
 					if (investments.length > 0) {
-						investments.forEach((investment) => {
+						investments.forEach(investment => {
 							investment.remove();
 						});
 					}
@@ -91,7 +91,7 @@ const removeUserInvestments = (req, res, next) => {
 		}
 
 		if (investment.length > 0) {
-			investment.forEach((investment) => {
+			investment.forEach(investment => {
 				investment.remove();
 			});
 		}
@@ -109,7 +109,7 @@ const removeUser = (req, res, next) => {
 		error.status = 403;
 		return next(error);
 	} else {
-		req.user.remove((err) => {
+		req.user.remove(err => {
 			if (err) return next(new Error(err));
 			next();
 		});
@@ -213,13 +213,6 @@ router.get("/:id", findUser, (req, res) => {
  * @apiParam (URL query parameters) {Number{1..100}} [pageSize] The number of elements to retrieve in one page (defaults to 100)
  * @apiSuccess (Response headers) {String} Link Links to the first, previous, next and last pages of the collection (if applicable)
  *
- * @apiError (Object) 404/NotFound No users were found
- * @apiErrorExample {json} 404 Not Found
- *    HTTP/1.1 404 Not Found
- *    Content-Type: application/json
- *
- *    Error: No users were found.
- *
  * @apiExample Example:
  *      GET /api/users?page=1&pageSize=2 HTTP/1.1
  *
@@ -244,6 +237,14 @@ router.get("/:id", findUser, (req, res) => {
  *              "id": "6193ee5da4560940f6904b57"
  *          }
  *      ]
+ *
+ *
+ * @apiError (Object) 404/NotFound No users were found
+ * @apiErrorExample {json} 404 Not Found
+ *    HTTP/1.1 404 Not Found
+ *    Content-Type: application/json
+ *
+ *    Error: No users were found.
  */
 router.get("/", function (req, res, next) {
 	const countQuery = queryUsers(req);
@@ -310,6 +311,11 @@ router.get("/", function (req, res, next) {
  *        "bases": "http://basewar.herokuapp.com/api/bases?ownerId=6193f60b8bff41c7e8ee29f3",
  *        "id": "6193f60b8bff41c7e8ee29f3"
  *    }
+ *
+ *
+ * @apiError (Object) 500/InternalServerError The length of the user's name is too short
+ * @apiErrorExample 500 Internal Server Error
+ *  User validation failed: name: Path `name` (`jo`) is shorter than the minimum allowed length (3).
  */
 router.post(
 	"/",
