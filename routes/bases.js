@@ -322,7 +322,6 @@ router.delete("/:id", authenticate, function (req, res, next) {
 	Base.findById(req.params.id).exec(function (err, base) {
 		// Authorizations
 		if (req.currentUserId !== base.ownerId.toString()) {
-
 			let error = new Error("You can't delete other user bases");
 			error.status = 403;
 			return next(error);
@@ -648,6 +647,10 @@ router.get("/:id/investments", function (req, res, next) {
 		query.exec(function (err, investments) {
 			if (err) {
 				return next(err);
+			} else if (!investments) {
+				let error = new Error("Investment not found.");
+				error.status = 404;
+				return next(error);
 			}
 
 			res.send(investments);
