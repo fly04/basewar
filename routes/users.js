@@ -470,7 +470,7 @@ router.post("/login", function (req, res, next) {
 					return next(err);
 				}
 
-				res.send({ token: token }); // Send the token to the client.
+				res.send({ token: token, user: user }); // Send the token to the client.
 			});
 		});
 	});
