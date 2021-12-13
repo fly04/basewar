@@ -19,7 +19,7 @@ const router = express.Router();
  * Remove all investments from a base.
  * @param {Number} baseId
  */
-const removeBaseInvestments = (baseId) => {
+const removeBaseInvestments = baseId => {
 	Investment.deleteMany({ baseId: baseId });
 };
 
@@ -88,7 +88,7 @@ router.post("/", utils.requireJson, authenticate, function (req, res, next) {
 
 		let isFarEnough = true;
 
-		existingBases.forEach((base) => {
+		existingBases.forEach(base => {
 			let existingBase = {
 				lat: base.location.coordinates[0],
 				long: base.location.coordinates[1],
@@ -162,7 +162,6 @@ router.post("/", utils.requireJson, authenticate, function (req, res, next) {
 	});
 });
 
-
 /**
  *
  * @api {get} /api/bases Get all bases
@@ -176,7 +175,7 @@ router.post("/", utils.requireJson, authenticate, function (req, res, next) {
  * @apiParam (URL query parameters) {String} [ownerId] The user id of the owner of the base.
  *
  * @apiSuccess (200) {type} name description
- * 
+ *
  * @apiExample
  * GET /api/bases?ownerId=5a9f9d8e8f8b8a0e8c8b4567 HTTP/1.1
  *
@@ -282,7 +281,13 @@ router.get("/", function (req, res, next) {
  * }
  */
 router.get("/:id", function (req, res, next) {
-	let query = Base.findById(req.params.id);
+	const baseId = req.params.id;
+
+	if (!ObjectId.isValid(baseId)) {
+		return res.status(404).type("text").send(`No user found with ID ${baseId}`);
+	}
+
+	let query = Base.findById(baseId);
 
 	query.populate("ownerId");
 	query.exec(function (err, base) {
