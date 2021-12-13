@@ -2,6 +2,7 @@ const config = require("./config");
 
 var createError = require("http-errors");
 var express = require("express");
+var cors = require("cors");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
@@ -11,6 +12,9 @@ var usersRouter = require("./routes/users");
 var basesRouter = require("./routes/bases");
 
 var app = express();
+
+// Use CORS
+app.use(cors());
 
 // APIdoc
 app.use("/apidoc", express.static(path.join(__dirname, "docs")));
