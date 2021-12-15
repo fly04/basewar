@@ -744,8 +744,13 @@ router.delete(
 				return next(error);
 			}
 
-			investment.remove();
-			res.send("Investment has been deleted");
+			investment.remove(function (err) {
+				if (err) {
+					return next(err);
+				}
+				res.sendStatus(204);
+				res.send("Investment has been deleted");
+			});
 		});
 	}
 );
