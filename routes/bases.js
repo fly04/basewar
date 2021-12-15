@@ -738,7 +738,7 @@ router.delete(
 				let error = new Error("Investment not found");
 				error.status = 404;
 				return next(error);
-			} else if (req.currentUserId !== investment.investorId) {
+			} else if (!investment.investorId.equals(req.currentUserId)) {
 				let error = new Error("You can't delete investments from other users");
 				error.status = 403;
 				return next(error);
