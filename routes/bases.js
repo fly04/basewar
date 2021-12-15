@@ -19,8 +19,8 @@ const router = express.Router();
  * Remove all investments from a base.
  * @param {Number} baseId
  */
-const removeBaseInvestments = baseId => {
-	Investment.deleteMany({ baseId: baseId });
+const removeBaseInvestments = (baseId, callback) => {
+	Investment.deleteMany({ baseId: baseId }, callback);
 };
 
 /********************************
@@ -335,10 +335,18 @@ router.delete("/:id", authenticate, function (req, res, next) {
 			return next(error);
 		}
 
-		removeBaseInvestments(base.id);
-		base.remove();
+		removeBaseInvestments(base.id, err => {
+			if (err) {
+				return next(err);
+			}
 
-		res.send(`${base.name} deleted`);
+			base.remove(base => {
+				if (err) {
+					return next(err);
+				}
+				res.status(204).send(`Base ${base.name} has been deleted`);
+			});
+		});
 	});
 });
 
@@ -748,8 +756,7 @@ router.delete(
 				if (err) {
 					return next(err);
 				}
-				res.sendStatus(204);
-				res.send("Investment has been deleted");
+				res.status(204).send("Investment has been deleted");
 			});
 		});
 	}
