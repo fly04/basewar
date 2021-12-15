@@ -378,8 +378,8 @@ router.delete(
  *          "name": "Bob"
  *      }
  *
- * @apiSuccessExample 200 OK
- *  HTTP/1.1 200 OK
+ * @apiSuccessExample 201 Created
+ *  HTTP/1.1 201 Created
  *  Content-Type: application/json
  *
  *      {
@@ -400,7 +400,7 @@ router.patch(
 	saveUser,
 	(req, res) => {
 		res
-			.status(200)
+			.status(201)
 			.set("Location", `${config.baseUrl}/users/${req.user.id}`)
 			.send(req.user);
 	}
