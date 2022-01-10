@@ -270,22 +270,21 @@ function updateUsersMoney() {
 				user.money += income;
 				sendMessageToUser(user.id, {
 					command: "updateUser",
-					params: { money: user.money, income: income },
+					params: {
+						money: user.money,
+						income: income,
+						bases: getActiveBases(),
+					},
 				});
 
 				updateUserMoney(user.id, user.money);
 			});
 		});
 	});
-	sendBasesToUsers();
 }
 
 // Send active bases to user
-function sendBasesToUsers() {
-	if (activeBases.length <= 0) {
-		return;
-	}
-
+function getActiveBases() {
 	let basesToSend = [];
 	activeBases.forEach((base) => {
 		let activeUsers = [];
@@ -298,14 +297,7 @@ function sendBasesToUsers() {
 		});
 	});
 
-	users.forEach((user) => {
-		sendMessageToClient(user.client, {
-			command: "updateBases",
-			params: {
-				bases: basesToSend,
-			},
-		});
-	});
+	return basesToSend;
 }
 
 // Update users money in DB
