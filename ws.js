@@ -280,6 +280,10 @@ function updateUsersMoney() {
 
 // Send active bases to user
 function sendBasesToUsers() {
+	if (activeBases.length <= 0) {
+		return;
+	}
+
 	let basesToSend = [];
 	activeBases.forEach((base) => {
 		let activeUsers = [];
