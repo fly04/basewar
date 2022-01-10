@@ -270,7 +270,11 @@ function updateUsersMoney() {
 				user.money += income;
 				sendMessageToUser(user.id, {
 					command: "updateUser",
-					params: { money: user.money, income: income, bases: activeBases },
+					params: { money: user.money, income: income },
+				});
+				sendMessageToUser(user.id, {
+					command: "updateBases",
+					params: { bases: activeBases },
 				});
 				updateUserMoney(user.id, user.money);
 			});
