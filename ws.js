@@ -360,5 +360,5 @@ function isLongitude(value) {
 setInterval(() => {
 	updateAllActiveBases();
 	updateUsersMoney();
-	sendBasesToUsers();
+	// sendBasesToUsers();
 }, 1000);
