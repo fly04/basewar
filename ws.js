@@ -304,8 +304,6 @@ function sendBasesToUsers() {
 			},
 		});
 	});
-
-	return basesToSend;
 }
 
 // Update users money in DB
@@ -360,7 +358,7 @@ function isLongitude(value) {
 
 // Run update functions every seconds
 setInterval(() => {
-	sendBasesToUsers();
 	updateAllActiveBases();
 	updateUsersMoney();
+	sendBasesToUsers();
 }, 1000);
