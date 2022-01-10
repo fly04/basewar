@@ -272,11 +272,12 @@ function updateUsersMoney() {
 					command: "updateUser",
 					params: { money: user.money, income: income },
 				});
-				sendBasesToUsers();
+
 				updateUserMoney(user.id, user.money);
 			});
 		});
 	});
+	sendBasesToUsers();
 }
 
 // Send active bases to user
