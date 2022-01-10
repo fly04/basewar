@@ -272,6 +272,7 @@ function updateUsersMoney() {
 					command: "updateUser",
 					params: { money: user.money, income: income },
 				});
+				sendBasesToUsers();
 				updateUserMoney(user.id, user.money);
 			});
 		});
@@ -360,5 +361,4 @@ function isLongitude(value) {
 setInterval(() => {
 	updateAllActiveBases();
 	updateUsersMoney();
-	// sendBasesToUsers();
 }, 1000);
