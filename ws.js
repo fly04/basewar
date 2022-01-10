@@ -268,12 +268,13 @@ function updateUsersMoney() {
 				}
 				user.money = storedUser.money;
 				user.money += income;
+				let bases = getActiveBases();
 				sendMessageToUser(user.id, {
 					command: "updateUser",
 					params: {
 						money: user.money,
 						income: income,
-						bases: getActiveBases(),
+						bases: bases,
 					},
 				});
 
