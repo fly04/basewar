@@ -268,13 +268,19 @@ function updateUsersMoney() {
 				}
 				user.money = storedUser.money;
 				user.money += income;
-				let bases = getActiveBases();
+
+				// let basesToSend = activeBases.map((base) => {
+				// 	let activeUsers = base.activeUsers.map((user) => {
+				// 		return user.id;
+				// 	});
+				// 	return { id: base.id, activeUsers: activeUsers };
+				// });
+
 				sendMessageToUser(user.id, {
 					command: "updateUser",
 					params: {
 						money: user.money,
 						income: income,
-						bases: bases,
 					},
 				});
 
@@ -286,18 +292,14 @@ function updateUsersMoney() {
 
 // Send active bases to user
 function getActiveBases() {
-	let basesToSend = [];
-	activeBases.forEach((base) => {
-		let activeUsers = [];
-		base.activeUsers.forEach((user) => {
-			activeUsers.push(user.id);
+	let basesToSend = activeBases.map((base) => {
+		let activeUsers = base.activeUsers.map((user) => {
+			return user.id;
 		});
-		basesToSend.push({
-			id: base.id,
-			users: activeUsers,
-		});
+		return { id: base.id, activeUsers: activeUsers };
 	});
 
+	console.log(basesToSend);
 	return basesToSend;
 }
 
@@ -355,4 +357,13 @@ function isLongitude(value) {
 setInterval(() => {
 	updateAllActiveBases();
 	updateUsersMoney();
-}, 2000);
+}, 1000);
+
+setInterval(() => {
+	users.forEach((user) => {
+		sendMessageToClient(user.client, {
+			command: "updateBases",
+			params: getActiveBases(),
+		});
+	});
+}, 5000);
