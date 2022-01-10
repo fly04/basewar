@@ -272,14 +272,36 @@ function updateUsersMoney() {
 					command: "updateUser",
 					params: { money: user.money, income: income },
 				});
-				sendMessageToUser(user.id, {
-					command: "updateBases",
-					params: { bases: activeBases },
-				});
 				updateUserMoney(user.id, user.money);
 			});
 		});
 	});
+}
+
+// Send active bases to user
+function sendBasesToUsers() {
+	let basesToSend = [];
+	activeBases.forEach((base) => {
+		let activeUsers = [];
+		base.activeUsers.forEach((user) => {
+			activeUsers.push(user.id);
+		});
+		basesToSend.push({
+			id: base.id,
+			users: activeUsers,
+		});
+	});
+
+	users.forEach((user) => {
+		sendMessageToClient(user.client, {
+			command: "updateBases",
+			params: {
+				bases: basesToSend,
+			},
+		});
+	});
+
+	return basesToSend;
 }
 
 // Update users money in DB
@@ -339,5 +361,5 @@ function isLongitude(value) {
 setInterval(() => {
 	updateAllActiveBases();
 	updateUsersMoney();
-	console.log(activeBases);
+	sendBasesToUsers();
 }, 1000);
