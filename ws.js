@@ -321,9 +321,6 @@ function updateUserMoney(userId, newAmount) {
 	});
 }
 
-// Get users money from DeleteBase
-function getUserMoney(userId) {}
-
 // Send a message to a user
 function sendMessageToUser(userId, messageData) {
 	let user = users.find((user) => user.id == userId);
@@ -359,7 +356,7 @@ function isLongitude(value) {
 
 // Run update functions every seconds
 setInterval(() => {
+	sendBasesToUsers();
 	updateAllActiveBases();
 	updateUsersMoney();
-	sendBasesToUsers();
 }, 1000);
