@@ -88,7 +88,7 @@ router.post("/", utils.requireJson, authenticate, function (req, res, next) {
 
 		let isFarEnough = true;
 
-		existingBases.forEach(base => {
+		existingBases.forEach((base) => {
 			let existingBase = {
 				lat: base.location.coordinates[0],
 				long: base.location.coordinates[1],
@@ -335,12 +335,12 @@ router.delete("/:id", authenticate, function (req, res, next) {
 			return next(error);
 		}
 
-		removeBaseInvestments(base.id, err => {
+		removeBaseInvestments(base.id, (err) => {
 			if (err) {
 				return next(err);
 			}
 
-			base.remove(base => {
+			base.remove((base) => {
 				if (err) {
 					return next(err);
 				}
@@ -388,7 +388,7 @@ router.delete("/:id", authenticate, function (req, res, next) {
 router.patch("/:id", utils.requireJson, authenticate, (req, res, next) => {
 	Base.findOne({ _id: req.params.id }).exec((err, base) => {
 		// Authorizations
-		if (req.currentUserId !== base.ownderId.toString()) {
+		if (req.currentUserId !== base.ownerId.toString()) {
 			let error = new Error("You can't edit other user bases");
 			error.status = 403;
 			return next(error);
