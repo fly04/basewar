@@ -269,21 +269,20 @@ function updateUsersMoney() {
 				user.money = storedUser.money;
 				user.money += income;
 
-				// let basesToSend = activeBases.map((base) => {
-				// 	let activeUsers = base.activeUsers.map((user) => {
-				// 		return user.id;
-				// 	});
-				// 	return { id: base.id, activeUsers: activeUsers };
-				// });
-
-				console.log(user.id);
-				sendMessageToUser(user.id, {
-					command: "updateUser",
-					params: {
-						money: user.money,
-						income: income,
-					},
+				users.forEach((maybeInBaseUser) => {
+					if (maybeInBaseUser.id === user.id) {
+						user.income = income;
+					}
 				});
+
+				// console.log(user.id);
+				// sendMessageToUser(user.id, {
+				// 	command: "updateUser",
+				// 	params: {
+				// 		money: user.money,
+				// 		income: income,
+				// 	},
+				// });
 
 				updateUserMoney(user.id, user.money);
 			});
@@ -354,10 +353,38 @@ function isLongitude(value) {
 	return value >= -180 && value <= 180;
 }
 
+function sendUsersMessage() {
+	users.forEach((connectedUser) => {
+		let isConnected = false;
+		let income = 0;
+
+		activeBases.forEach((base) => {
+			base.activeUsers.forEach((userInBase) => {
+				if (userInBase.id === connectedUser.id) {
+					isConnected = true;
+				}
+			});
+		});
+
+		if (isConnected) {
+			income = connectedUser.income;
+		}
+
+		sendMessageToUser(connectedUser.id, {
+			command: "updateUser",
+			params: {
+				money: connectedUser.money,
+				income: income,
+			},
+		});
+	});
+}
+
 // Run update functions every seconds
 setInterval(() => {
 	updateAllActiveBases();
 	updateUsersMoney();
+	sendUsersMessage();
 }, 1000);
 
 setInterval(() => {
