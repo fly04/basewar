@@ -276,6 +276,7 @@ function updateUsersMoney() {
 				// 	return { id: base.id, activeUsers: activeUsers };
 				// });
 
+				console.log(user.id);
 				sendMessageToUser(user.id, {
 					command: "updateUser",
 					params: {
@@ -299,7 +300,7 @@ function getActiveBases() {
 		return { id: base.id, activeUsers: activeUsers };
 	});
 
-	console.log(basesToSend);
+	// console.log(basesToSend);
 	return basesToSend;
 }
 
