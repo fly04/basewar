@@ -299,7 +299,10 @@ function getActiveBases() {
 		return { id: base.id, activeUsers: activeUsers };
 	});
 
-	// console.log(basesToSend);
+	basesToSend.forEach((base) => {
+		base.activeUsers = base.activeUsers.filter((v, i, a) => a.indexOf(v) === i);
+	});
+
 	return basesToSend;
 }
 
@@ -385,6 +388,8 @@ setInterval(() => {
 	updateAllActiveBases();
 	updateUsersMoney();
 	sendUsersMessage();
+
+	console.log(getActiveBases());
 }, 1000);
 
 setInterval(() => {
