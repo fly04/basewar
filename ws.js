@@ -5,6 +5,7 @@ const User = require("./models/user");
 const Base = require("./models/base");
 const Investment = require("./models/investment");
 const utils = require("./routes/utils");
+const config = require("./config");
 
 // Array of currently connected WebSocket clients.
 const users = [];
@@ -399,4 +400,4 @@ setInterval(() => {
 			params: getActiveBases(),
 		});
 	});
-}, 5000);
+}, config.updateBaseInterval);
